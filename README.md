@@ -27,21 +27,30 @@ SwarmGPT uses [Pixi](https://pixi.sh) for dependency management and environment 
 
 ### Setting up SwarmGPT
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/utiasDSL/swarmGPT.git
-   cd swarmGPT
-   ```
+Clone the repository and activate the environment:
+```bash
+git clone https://github.com/utiasDSL/swarmGPT.git
+cd swarmGPT
+pixi shell
+```
 
-2. Install dependencies and set up the environment:
-   ```bash
-   pixi install
-   ```
+Note: You will see an error message, that setup.sh was not found. This is fine and fixed in the next step.
 
-3. Activate the environment:
-   ```bash
-   pixi shell
-   ```
+This project is build on crazyswarm. Since the original (legacy) version is broken, please use our fork:
+```bash
+git clone --recurse-submodules git@github.com:utiasDSL/crazyswarm.git
+cd crazyswarm
+./build.sh
+exit
+```
+
+Your setup is ready now. Note: You need to activate your shell again with `pixi shell`.
+
+To test the crazyswarm installation, you can try to run the unit tests:
+```bash
+cd crazyswarm/ros_ws/src/crazyswarm/scripts
+python -m pytest
+```
 
 The environment includes:
 - **Python 3.11** with essential scientific computing packages

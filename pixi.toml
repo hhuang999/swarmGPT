@@ -8,6 +8,7 @@ platforms = ["linux-64"]  # , "win-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [dependencies]
 python = "3.11.*"
+pip = "*"
 compilers = "*"
 cmake = "*"
 pkg-config = "*"
@@ -26,6 +27,7 @@ libgl-devel = "*"
 [pypi-dependencies]
 ruff = ">=0.13.0,<0.14"
 crazyflow = ">=0.0.2"
+pytest = "*"
 
 [environments]
 docs = { features = ["docs"] }
@@ -41,3 +43,6 @@ mkdocs-literate-nav = ">=0.6.0"
 [feature.docs.tasks]
 docs-serve = { cmd = "mkdocs serve", description = "Serve docs locally" }
 docs-build = { cmd = "mkdocs build", description = "Build docs" }
+
+[activation]
+scripts = ["crazyswarm/ros_ws/devel/setup.sh"]
