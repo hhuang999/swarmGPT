@@ -17,4 +17,9 @@ sandbox/
 /data/
 /video
 site
+
+# submodules
 crazyswarm
+axswarm
+
+key

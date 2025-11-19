@@ -29,7 +29,7 @@ SwarmGPT uses [Pixi](https://pixi.sh) for dependency management and environment 
 
 Clone the repository and activate the environment:
 ```bash
-git clone https://github.com/utiasDSL/swarmGPT.git
+git clone git@github.com:utiasDSL/swarmGPT.git
 cd swarmGPT
 pixi shell
 ```
@@ -38,18 +38,32 @@ Note: You will see an error message, that setup.sh was not found. This is fine a
 
 This project is build on crazyswarm. Since the original (legacy) version is broken, please use our fork:
 ```bash
-git clone --recurse-submodules git@github.com:utiasDSL/crazyswarm.git
-cd crazyswarm
+git clone --recurse-submodules git@github.com:utiasDSL/crazyswarm.git submodules/crazyswarm
+cd submodules/crazyswarm
 ./build.sh
 exit
 ```
 
-Your setup is ready now. Note: You need to activate your shell again with `pixi shell`.
-
-To test the crazyswarm installation, you can try to run the unit tests:
+To test the crazyswarm installation, you can try to run the unit tests after reactivating the shell with `pixi shell`:
 ```bash
-cd crazyswarm/ros_ws/src/crazyswarm/scripts
+cd submodules/crazyswarm/ros_ws/src/crazyswarm/scripts
 python -m pytest
+```
+
+Note: Those tests will fail after completion of the installation, since they require `numpy<2`.
+
+Next we can install axswarm and swarmGPT, given an active environment, with:
+```bash
+git clone git@github.com:utiasDSL/axswarm.git submodules/axswarm
+pip install -e .
+pip install -e ./submodules/axswarm
+```
+
+Note: We are installing axswarm last to force `numpy>=2.0`, which is needed for some of our packages.
+
+Your setup is ready now. If you are unsure if the installation was successful, you can run tests after exporting the API key (see below).
+```bash
+python -m pytest tests
 ```
 
 The environment includes:
@@ -74,7 +88,7 @@ pixi run -e docs docs-build
 
 ### Prerequisites
 
-Before running SwarmGPT, ensure you have:
+Before running SwarmGPT, start your pixi shell with `pixi shell`. Then, ensure you have:
 
 1. **OpenAI API Key**: Set your OpenAI API key as an environment variable:
    ```bash
@@ -83,7 +97,7 @@ Before running SwarmGPT, ensure you have:
 
 2. **Crazyswarm Configuration**: Configure your drone swarm by editing the `crazyflies.yaml` file in your Crazyswarm installation. SwarmGPT automatically locates this file at:
    ```
-   <crazyswarm_path>/launch/crazyflies.yaml
+   submodules/crazyswarm/ros_ws/src/crazyswarm/launch/crazyflies.yaml
    ```
    
    This file defines:
