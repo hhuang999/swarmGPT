@@ -34,7 +34,7 @@ cd swarmGPT
 pixi shell
 ```
 
-Note: You will see an error message, that setup.sh was not found. This is fine and fixed in the next step.
+Note: You will see an error message, that `setup.sh` and `openai_api_key.sh` were not found. This is fine and fixed in the next steps.
 
 This project is build on crazyswarm. Since the original (legacy) version is broken, please use our fork:
 ```bash
