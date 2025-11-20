@@ -39,9 +39,8 @@ Note: You will see an error message, that `setup.sh` and `openai_api_key.sh` wer
 This project is build on crazyswarm. Since the original (legacy) version is broken, please use our fork:
 ```bash
 git clone --recurse-submodules git@github.com:utiasDSL/crazyswarm.git submodules/crazyswarm
-cd submodules/crazyswarm
-./build.sh
-exit
+cd submodules/crazyswarm && ./build.sh
+exit # to force sourcing of setup.sh
 ```
 
 To test the crazyswarm installation, you can try to run the unit tests after reactivating the shell with `pixi shell`:
@@ -49,8 +48,20 @@ To test the crazyswarm installation, you can try to run the unit tests after rea
 cd submodules/crazyswarm/ros_ws/src/crazyswarm/scripts
 python -m pytest
 ```
-
 Note: Those tests will fail after completion of the installation, since they require `numpy<2`.
+
+Crazyswarm needs tracking information (for **deployment only**). At the Learning Systems Lab, we use a Vicon motion capture and therefore need this `vicon_bridge` package:
+```bash
+git clone git@github.com:ethz-asl/vicon_bridge.git submodules/catkin_ws/src/vicon_bridge
+cd submodules/catkin_ws && catkin_make -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+exit # to force sourcing of setup.bash
+```
+You need to set the IP in `submodules/catkin_ws/src/vicon_bridge/launch/vicon.launch` (`datastream_hostport`) and in `submodules/crazyswarm/ros_ws/src/crazyswarm/launch/hover_swarm.launch` (`motion_capture_host_name`).
+
+Lastly, we rely on the VLC media player to play the music. In case you don't have it installed, run:
+```bash
+sudo apt install vlc
+```
 
 Next we can install axswarm and swarmGPT, given an active environment, with:
 ```bash

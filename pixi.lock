@@ -354,6 +354,7 @@ environments:
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-interactive-markers-1.12.0-np126py311h3dde49b_18.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-joint-state-publisher-1.15.1-np126py311h3dde49b_18.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-joint-state-publisher-gui-1.15.1-np126py311h3dde49b_18.conda
+      - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-joy-1.15.1-np126py311h3dde49b_18.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-kdl-conversions-1.13.2-np126py311h3dde49b_18.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-kdl-parser-1.14.2-np126py311hb22d75c_23.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-laser-geometry-1.6.7-np126py311h3dde49b_18.conda
@@ -999,6 +1000,7 @@ environments:
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-interactive-markers-1.12.0-np126py311h3dde49b_18.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-joint-state-publisher-1.15.1-np126py311h3dde49b_18.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-joint-state-publisher-gui-1.15.1-np126py311h3dde49b_18.conda
+      - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-joy-1.15.1-np126py311h3dde49b_18.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-kdl-conversions-1.13.2-np126py311h3dde49b_18.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-kdl-parser-1.14.2-np126py311hb22d75c_23.conda
       - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-laser-geometry-1.6.7-np126py311h3dde49b_18.conda
@@ -7880,6 +7882,24 @@ packages:
   license: BSD-3-Clause
   size: 29048
   timestamp: 1736479970657
+- conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-joy-1.15.1-np126py311h3dde49b_18.conda
+  sha256: ac6600095f02735c2dd45a3bc3e93d2aadc440ee4297c4d70c6a4604df35ab0f
+  md5: 256dda1a4051695a370ac982683d2826
+  depends:
+  - python
+  - ros-distro-mutex 0.6.* noetic_*
+  - ros-noetic-diagnostic-updater
+  - ros-noetic-roscpp
+  - ros-noetic-sensor-msgs
+  - __glibc >=2.17,<3.0.a0
+  - libstdcxx >=14
+  - libgcc >=14
+  - ros-distro-mutex >=0.6.0,<0.7.0a0
+  - numpy >=1.26.4,<2.0a0
+  - python_abi 3.11.* *_cp311
+  license: BSD-3-Clause
+  size: 91769
+  timestamp: 1736479812647
 - conda: https://prefix.dev/robostack-noetic/linux-64/ros-noetic-kdl-conversions-1.13.2-np126py311h3dde49b_18.conda
   sha256: 712af4c052898efaadb376f13fcb9206ad9054aa501bfd78cf34e74d5d5cf500
   md5: 331535fdc793105d3b8d64b87276e320

@@ -15,6 +15,7 @@ pkg-config = "*"
 make = "*"
 ninja = "*"
 ros-noetic-desktop = "*"
+ros-noetic-joy = "*"
 catkin_tools = "*"
 rosdep = "*"
 pcl = ">=1.14.1,<2"
@@ -45,4 +46,8 @@ docs-serve = { cmd = "mkdocs serve", description = "Serve docs locally" }
 docs-build = { cmd = "mkdocs build", description = "Build docs" }
 
 [activation]
-scripts = ["submodules/crazyswarm/ros_ws/devel/setup.sh", "openai_api_key.sh"]
+scripts = [
+    "submodules/crazyswarm/ros_ws/devel/setup.sh", 
+    "submodules/catkin_ws/devel/setup.bash", 
+    "openai_api_key.sh"
+    ]
