@@ -11,12 +11,10 @@ from __future__ import annotations
 import logging
 import time
 from collections import deque
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import jax
 import numpy as np
-import PIL
 from axswarm import SolverData, SolverSettings, solve
 from crazyflow.control import Control
 from crazyflow.sim import Physics, Sim
@@ -111,7 +109,7 @@ def simulate_axswarm(
 
     tstart = time.time()
     for step in tqdm(range(n_steps)):
-        yield "progress", step+1, n_steps
+        yield "progress", step + 1, n_steps
         t = step / sim.control_freq
         if step % solve_every_n_steps == 0:
             state = np.concat((pos, vel), axis=-1)
@@ -157,7 +155,7 @@ def simulate_axswarm(
         "solve_times": np.array(solve_times),
     }
     yield "result", sim_log, "placeholder"
-    #return sim_log
+    # return sim_log
 
 
 def simulate_spline(
