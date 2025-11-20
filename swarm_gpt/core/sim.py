@@ -211,19 +211,7 @@ def simulate_spline(
         ...
 
     # MAIN SIMULATION LOOP
-    path = Path(__file__).parents[2] / "video/100/raw"
-    path.mkdir(parents=True, exist_ok=True)
-    # resolution = (240 * 16 // 9, 240)
-    resolution = (3840, 2160)
-    resolution = (1920, 1080)
-    # default_cam_config = {"distance": 7, "elevation": -40, "azimuth": 20}  # 10
-    # default_cam_config = {"distance": 20, "elevation": -40, "azimuth": 20}  # 50
-    default_cam_config = {"distance": 30, "elevation": -30, "azimuth": 20}  # 100
-    save_video = True
     tstart = time.time()
-    from tqdm import tqdm
-
-    img_cnt = 0
     for i in tqdm(range(0, int(t * sim.control_freq))):
         current_time = i / sim.control_freq
         des_pos = np.array([[s(current_time) for s in splines[j]] for j in splines])
@@ -240,21 +228,8 @@ def simulate_spline(
             for j, dq in enumerate(swarm_pos):
                 dq.append(np.asarray(sim.data.states.pos[0, j]))
                 draw_line(sim, np.array(dq), rgba=rgbas[j % len(rgbas)], min_size=2, max_size=5)
-            # horizon = current_time - np.linspace(0, 2, 20)
-            # des_pos = np.array([[s(horizon) for s in splines[i]] for i in splines])
-            # for j, traj in enumerate(des_pos):
-            #     draw_line(sim, traj.T, rgba=rgbas[j % len(rgbas)])
-            if save_video:
-                img = sim.render(
-                    mode="rgb_array",
-                    default_cam_config=default_cam_config,
-                    width=resolution[0],
-                    height=resolution[1],
-                )
-                PIL.Image.fromarray(img).save(path / f"img_{img_cnt:05d}.png")
-                img_cnt += 1
-            else:
-                sim.render()
+
+            sim.render()
             if (dt := current_time - (time.time() - tstart)) > 0:
                 time.sleep(dt)
     sim.close()
