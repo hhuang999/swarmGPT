@@ -94,6 +94,7 @@ Before running SwarmGPT, start your pixi shell with `pixi shell`. Then, ensure y
    ```bash
    export OPENAI_API_KEY="your-api-key-here"
    ```
+   For convinience, you can create a `key.sh` with the command above, which is automatically executed whenever you start you `pixi shell`.
 
 2. **Crazyswarm Configuration**: Configure your drone swarm by editing the `crazyflies.yaml` file in your Crazyswarm installation. SwarmGPT automatically locates this file at:
    ```

@@ -45,4 +45,4 @@ docs-serve = { cmd = "mkdocs serve", description = "Serve docs locally" }
 docs-build = { cmd = "mkdocs build", description = "Build docs" }
 
 [activation]
-scripts = ["submodules/crazyswarm/ros_ws/devel/setup.sh"]
+scripts = ["submodules/crazyswarm/ros_ws/devel/setup.sh", "openai_api_key.sh"]

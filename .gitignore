@@ -22,4 +22,4 @@ site
 crazyswarm
 axswarm
 
-key
+openai_api_key.sh
