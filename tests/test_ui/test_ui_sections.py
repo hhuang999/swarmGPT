@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -44,18 +44,10 @@ def _mock_backend() -> MagicMock:
     backend.choreographer = choreographer
 
     # Settings
-    backend.settings = {
-        "axswarm": {
-            "pos_min": [-2.0, -2.0, 0.0],
-            "pos_max": [2.0, 2.0, 2.0],
-        }
-    }
+    backend.settings = {"axswarm": {"pos_min": [-2.0, -2.0, 0.0], "pos_max": [2.0, 2.0, 2.0]}}
 
     # create_custom_primitive stub
-    backend.create_custom_primitive.return_value = {
-        "success": True,
-        "name": "test_primitive",
-    }
+    backend.create_custom_primitive.return_value = {"success": True, "name": "test_primitive"}
 
     # Other backend stubs used by the existing UI
     backend.simulate.return_value = iter([("done", 1, 1)])
@@ -75,6 +67,7 @@ def _mock_backend() -> MagicMock:
 def test_create_ui_builds():
     """create_ui should return a gr.Blocks instance with the three Accordions."""
     import gradio as gr
+
     from swarm_gpt.ui.ui import create_ui
 
     backend = _mock_backend()
@@ -89,7 +82,6 @@ def test_create_ui_builds():
 
 def test_custom_primitive_callback_success():
     """The _on_generate_primitive helper should call backend.create_custom_primitive."""
-    from swarm_gpt.ui.ui import create_ui
 
     backend = _mock_backend()
     # Build UI so the inner function is defined (we call it via the module-level
@@ -98,10 +90,10 @@ def test_custom_primitive_callback_success():
     import gradio as gr
 
     with gr.Blocks():
-        name_box = gr.Textbox()
-        desc_box = gr.Textbox()
-        params_box = gr.Textbox()
-        status_box = gr.Textbox()
+        gr.Textbox()
+        gr.Textbox()
+        gr.Textbox()
+        gr.Textbox()
 
     # Directly test the logic that the callback wraps
     desc = "zigzag motion"
@@ -156,10 +148,7 @@ def test_flight_bounds_from_settings():
     """FlightBounds should be constructable from settings-style arrays."""
     from swarm_gpt.core.multimodal import FlightBounds
 
-    settings = {
-        "pos_min": [-2.0, -2.0, 0.0],
-        "pos_max": [2.0, 2.0, 2.0],
-    }
+    settings = {"pos_min": [-2.0, -2.0, 0.0], "pos_max": [2.0, 2.0, 2.0]}
     lower = np.array(settings["pos_min"])
     upper = np.array(settings["pos_max"])
     bounds = FlightBounds(lower=lower, upper=upper)
@@ -184,9 +173,7 @@ def test_voice_controller_parse_basic():
     from swarm_gpt.core.multimodal.voice_controller import VoiceController
 
     vc = VoiceController()
-    positions = np.array(
-        [[0.0, 0.0, 100.0], [100.0, 0.0, 100.0], [0.0, 100.0, 100.0]]
-    )
+    positions = np.array([[0.0, 0.0, 100.0], [100.0, 0.0, 100.0], [0.0, 100.0, 100.0]])
     result = vc.parse_command("提高30", positions)
     assert "action" in result
     assert "target_drones" in result

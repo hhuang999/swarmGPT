@@ -3,18 +3,16 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 
 from swarm_gpt.core.multimodal.image_to_formation import (
-    ConversionMetadata,
     FlightBounds,
     ImageFormationConverter,
     _to_greyscale,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -52,17 +50,11 @@ def _noisy_image(size: int = 200) -> np.ndarray:
 
 
 def _make_bounds() -> FlightBounds:
-    return FlightBounds(
-        lower=np.array([-2.0, -2.0, 0.0]),
-        upper=np.array([2.0, 2.0, 2.0]),
-    )
+    return FlightBounds(lower=np.array([-2.0, -2.0, 0.0]), upper=np.array([2.0, 2.0, 2.0]))
 
 
 def _make_bounds_dict() -> dict[str, np.ndarray]:
-    return {
-        "lower": np.array([-2.0, -2.0, 0.0]),
-        "upper": np.array([2.0, 2.0, 2.0]),
-    }
+    return {"lower": np.array([-2.0, -2.0, 0.0]), "upper": np.array([2.0, 2.0, 2.0])}
 
 
 # ---------------------------------------------------------------------------
@@ -88,10 +80,7 @@ class TestFlightSpaceMapping:
         assert np.allclose(result[:, 2], 150.0)
 
     def test_z_clipped_to_bounds(self) -> None:
-        bounds = FlightBounds(
-            lower=np.array([-2.0, -2.0, 0.5]),
-            upper=np.array([2.0, 2.0, 1.5]),
-        )
+        bounds = FlightBounds(lower=np.array([-2.0, -2.0, 0.5]), upper=np.array([2.0, 2.0, 1.5]))
         # flight_height=200 cm is above upper[2]*100 = 150 cm
         converter = ImageFormationConverter(flight_height=200.0)
         pts = np.array([[0.5, 0.5]])

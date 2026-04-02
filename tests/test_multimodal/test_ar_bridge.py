@@ -12,10 +12,10 @@ from numpy.typing import NDArray
 
 from swarm_gpt.core.multimodal.ar_bridge import ARBridge
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_positions(n_drones: int = 6) -> NDArray:
     """Return a simple (n_drones, 3) grid of positions in cm."""
@@ -31,6 +31,7 @@ def _make_positions(n_drones: int = 6) -> NDArray:
 # ---------------------------------------------------------------------------
 # Tests – set_formation
 # ---------------------------------------------------------------------------
+
 
 class TestSetFormation:
     """Tests for ARBridge.set_formation()."""
@@ -79,6 +80,7 @@ class TestSetFormation:
 # Tests – _get_drone_color
 # ---------------------------------------------------------------------------
 
+
 class TestGetDroneColor:
     """Tests for ARBridge._get_drone_color()."""
 
@@ -119,6 +121,7 @@ class TestGetDroneColor:
 # Tests – _process_command
 # ---------------------------------------------------------------------------
 
+
 class TestProcessCommand:
     """Tests for ARBridge._process_command()."""
 
@@ -127,11 +130,9 @@ class TestProcessCommand:
         positions = _make_positions(4)
         bridge.set_formation(positions)
 
-        result = bridge._process_command({
-            "type": "move_drone",
-            "drone_id": 1,
-            "new_position": [10, 20, 30],
-        })
+        result = bridge._process_command(
+            {"type": "move_drone", "drone_id": 1, "new_position": [10, 20, 30]}
+        )
 
         assert result["status"] == "ok"
         assert result["drone_id"] == 1
@@ -142,34 +143,23 @@ class TestProcessCommand:
         positions = _make_positions(3)
         bridge.set_formation(positions)
 
-        bridge._process_command({
-            "type": "move_drone",
-            "drone_id": 2,
-            "new_position": [50, 60, 70],
-        })
-        np.testing.assert_array_almost_equal(
-            bridge._positions[2], [50, 60, 70]
-        )
+        bridge._process_command({"type": "move_drone", "drone_id": 2, "new_position": [50, 60, 70]})
+        np.testing.assert_array_almost_equal(bridge._positions[2], [50, 60, 70])
 
     def test_move_drone_missing_fields(self) -> None:
         bridge = ARBridge()
         bridge.set_formation(_make_positions(2))
 
-        result = bridge._process_command({
-            "type": "move_drone",
-            "drone_id": 0,
-        })
+        result = bridge._process_command({"type": "move_drone", "drone_id": 0})
         assert result["status"] == "error"
         assert "new_position" in result["detail"]
 
     def test_move_drone_no_formation_set(self) -> None:
         bridge = ARBridge()
 
-        result = bridge._process_command({
-            "type": "move_drone",
-            "drone_id": 0,
-            "new_position": [1, 2, 3],
-        })
+        result = bridge._process_command(
+            {"type": "move_drone", "drone_id": 0, "new_position": [1, 2, 3]}
+        )
         assert result["status"] == "error"
         assert "No formation" in result["detail"]
 
@@ -177,11 +167,9 @@ class TestProcessCommand:
         bridge = ARBridge()
         bridge.set_formation(_make_positions(3))
 
-        result = bridge._process_command({
-            "type": "move_drone",
-            "drone_id": 10,
-            "new_position": [1, 2, 3],
-        })
+        result = bridge._process_command(
+            {"type": "move_drone", "drone_id": 10, "new_position": [1, 2, 3]}
+        )
         assert result["status"] == "error"
         assert "out of range" in result["detail"]
 
@@ -189,11 +177,9 @@ class TestProcessCommand:
         bridge = ARBridge()
         bridge.set_formation(_make_positions(3))
 
-        result = bridge._process_command({
-            "type": "move_drone",
-            "drone_id": -1,
-            "new_position": [1, 2, 3],
-        })
+        result = bridge._process_command(
+            {"type": "move_drone", "drone_id": -1, "new_position": [1, 2, 3]}
+        )
         assert result["status"] == "error"
         assert "out of range" in result["detail"]
 
@@ -213,6 +199,7 @@ class TestProcessCommand:
 # ---------------------------------------------------------------------------
 # Tests – push_trajectory_point
 # ---------------------------------------------------------------------------
+
 
 class TestPushTrajectoryPoint:
     """Tests for ARBridge.push_trajectory_point() payload generation."""
@@ -235,6 +222,7 @@ class TestPushTrajectoryPoint:
         payload = bridge.push_trajectory_point(0.0, _make_positions(2))
         # Should parse without error
         from datetime import datetime
+
         datetime.fromisoformat(payload["timestamp"])
 
     def test_positions_values_match(self) -> None:
@@ -249,6 +237,7 @@ class TestPushTrajectoryPoint:
 # ---------------------------------------------------------------------------
 # Tests – constructor / server lifecycle
 # ---------------------------------------------------------------------------
+
 
 class TestConstructor:
     """Tests for ARBridge initialisation."""

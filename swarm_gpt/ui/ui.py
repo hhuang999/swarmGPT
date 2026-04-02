@@ -259,9 +259,7 @@ def create_ui(backend: AppBackend) -> gr.Blocks:
             cp_generate_btn = gr.Button("Generate Primitive")
             cp_status = gr.Textbox(label="Status", interactive=False)
 
-            def _on_generate_primitive(
-                name: str, desc: str, params_json: str
-            ) -> str:
+            def _on_generate_primitive(name: str, desc: str, params_json: str) -> str:
                 """Handle the Generate Primitive button click."""
                 if not desc.strip():
                     return "Error: description is required."
@@ -283,9 +281,7 @@ def create_ui(backend: AppBackend) -> gr.Blocks:
                 return f"Error: {result.get('error', 'unknown error')}"
 
             cp_generate_btn.click(
-                _on_generate_primitive,
-                inputs=[cp_name, cp_desc, cp_params],
-                outputs=[cp_status],
+                _on_generate_primitive, inputs=[cp_name, cp_desc, cp_params], outputs=[cp_status]
             )
 
         # ------------------------------------------------------------------
@@ -303,9 +299,7 @@ def create_ui(backend: AppBackend) -> gr.Blocks:
             img_preview = gr.Plot(label="Formation Preview")
             img_shape_name = gr.Textbox(label="Detected Shape", interactive=False)
 
-            def _on_detect_shape(
-                image: object, sketch: object, n_drones: int
-            ) -> tuple:
+            def _on_detect_shape(image: object, sketch: object, n_drones: int) -> tuple:
                 """Handle the Detect Shape button click."""
                 from swarm_gpt.core.multimodal import FlightBounds, ImageFormationConverter
 
@@ -392,9 +386,7 @@ def create_ui(backend: AppBackend) -> gr.Blocks:
                 return transcript, "{}"
 
             voice_audio.change(
-                _on_audio_record,
-                inputs=[voice_audio],
-                outputs=[voice_transcript, voice_parsed],
+                _on_audio_record, inputs=[voice_audio], outputs=[voice_transcript, voice_parsed]
             )
 
             def _on_apply_voice_command(transcript: str) -> str:
@@ -405,9 +397,7 @@ def create_ui(backend: AppBackend) -> gr.Blocks:
                     return json.dumps({"error": "No transcript to parse"})
                 vc = VoiceController()
                 try:
-                    positions = np.array(
-                        list(backend.choreographer.starting_pos.values())
-                    )
+                    positions = np.array(list(backend.choreographer.starting_pos.values()))
                     positions_cm = positions * 100
                 except Exception:
                     return json.dumps({"error": "Could not retrieve drone positions"})
@@ -415,9 +405,7 @@ def create_ui(backend: AppBackend) -> gr.Blocks:
                 return json.dumps(result, indent=2, default=str)
 
             voice_apply_btn.click(
-                _on_apply_voice_command,
-                inputs=[voice_transcript],
-                outputs=[voice_parsed],
+                _on_apply_voice_command, inputs=[voice_transcript], outputs=[voice_parsed]
             )
 
     return ui

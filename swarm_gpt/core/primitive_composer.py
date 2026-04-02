@@ -15,7 +15,7 @@ import numpy as np
 
 from swarm_gpt.core.motion_primitives import motion_primitives as motion_primitives_collection
 from swarm_gpt.core.motion_primitives import primitive_by_name
-from swarm_gpt.exception import LLMFormatError, LLMResponseProcessingError
+from swarm_gpt.exception import LLMFormatError
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -87,8 +87,7 @@ class PrimitiveComposer:
         op = data["op"]
         if op not in COMPOSITION_OPERATORS:
             raise CompositionError(
-                f"Unknown composition operator '{op}'. "
-                f"Valid operators: {COMPOSITION_OPERATORS}"
+                f"Unknown composition operator '{op}'. Valid operators: {COMPOSITION_OPERATORS}"
             )
         if "children" not in data or not isinstance(data["children"], list) or not data["children"]:
             raise CompositionError(f"'{op}' composition must have a non-empty 'children' list")
@@ -96,7 +95,9 @@ class PrimitiveComposer:
         children: list[dict] = []
         for idx, child in enumerate(data["children"]):
             if not isinstance(child, dict):
-                raise CompositionError(f"Child {idx} of '{op}' must be a dict, got {type(child).__name__}")
+                raise CompositionError(
+                    f"Child {idx} of '{op}' must be a dict, got {type(child).__name__}"
+                )
             if "op" in child:
                 # Recursively validate nested composition
                 children.append(self.parse_composition_yaml(child))
@@ -108,9 +109,7 @@ class PrimitiveComposer:
                         f"Unknown primitive '{prim_name}' in child {idx} of '{op}'"
                     )
                 if "params" not in child:
-                    raise CompositionError(
-                        f"Child {idx} ('{prim_name}') must have a 'params' key"
-                    )
+                    raise CompositionError(f"Child {idx} ('{prim_name}') must have a 'params' key")
                 # Validate number of params
                 expected = motion_primitives_collection[prim_name]["n_args"]
                 actual = len(child["params"])
@@ -121,9 +120,7 @@ class PrimitiveComposer:
                     )
                 children.append(child)
             else:
-                raise CompositionError(
-                    f"Child {idx} of '{op}' must have 'op' or 'primitive' key"
-                )
+                raise CompositionError(f"Child {idx} of '{op}' must have 'op' or 'primitive' key")
 
         result: dict = {"op": op, "children": children}
 
@@ -134,7 +131,9 @@ class PrimitiveComposer:
             try:
                 weight = float(data["weight"])
             except (TypeError, ValueError) as e:
-                raise CompositionError(f"'blend' weight must be a number, got {data['weight']}") from e
+                raise CompositionError(
+                    f"'blend' weight must be a number, got {data['weight']}"
+                ) from e
             if not (0.0 <= weight <= 1.0):
                 raise CompositionError(f"'blend' weight must be between 0 and 1, got {weight}")
             result["weight"] = weight
@@ -215,9 +214,13 @@ class PrimitiveComposer:
             child_tend = tstart + (i + 1) * (tend - tstart) / n
 
             if "op" in child:
-                current_pos, wps = self.execute_composed(child, current_pos, child_tstart, child_tend, limits)
+                current_pos, wps = self.execute_composed(
+                    child, current_pos, child_tstart, child_tend, limits
+                )
             else:
-                current_pos, wps = self._execute_leaf(child, current_pos, child_tstart, child_tend, limits)
+                current_pos, wps = self._execute_leaf(
+                    child, current_pos, child_tstart, child_tend, limits
+                )
 
             all_waypoints.update(wps)
 
@@ -259,7 +262,9 @@ class PrimitiveComposer:
 
         for child, group in zip(children, drone_groups):
             if "op" in child:
-                child_pos, wps = self.execute_composed(child, swarm_pos[group], tstart, tend, limits)
+                child_pos, wps = self.execute_composed(
+                    child, swarm_pos[group], tstart, tend, limits
+                )
             else:
                 child_pos, wps = self._execute_leaf(child, swarm_pos[group], tstart, tend, limits)
 
@@ -332,12 +337,7 @@ class PrimitiveComposer:
     # ------------------------------------------------------------------
 
     def _execute_node(
-        self,
-        node: dict,
-        swarm_pos: NDArray,
-        tstart: float,
-        tend: float,
-        limits: dict[str, NDArray],
+        self, node: dict, swarm_pos: NDArray, tstart: float, tend: float, limits: dict[str, NDArray]
     ) -> tuple[NDArray, dict[float, dict[int, NDArray]]]:
         """Execute a composition node (either a subtree or a leaf)."""
         if "op" in node:
@@ -346,11 +346,7 @@ class PrimitiveComposer:
 
     @staticmethod
     def _execute_leaf(
-        child: dict,
-        swarm_pos: NDArray,
-        tstart: float,
-        tend: float,
-        limits: dict[str, NDArray],
+        child: dict, swarm_pos: NDArray, tstart: float, tend: float, limits: dict[str, NDArray]
     ) -> tuple[NDArray, dict[float, dict[int, NDArray]]]:
         """Execute a single primitive leaf node."""
         prim_name = child["primitive"]
@@ -361,9 +357,7 @@ class PrimitiveComposer:
 
     @staticmethod
     def _interpolate_waypoints(
-        waypoints: dict[float, dict[int, NDArray]],
-        target_times: list[float],
-        n_drones: int,
+        waypoints: dict[float, dict[int, NDArray]], target_times: list[float], n_drones: int
     ) -> dict[float, dict[int, NDArray]]:
         """Linearly interpolate waypoint positions for missing timesteps.
 

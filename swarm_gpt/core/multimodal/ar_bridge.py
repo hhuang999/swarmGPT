@@ -73,9 +73,7 @@ class ARBridge:
     # ------------------------------------------------------------------
 
     def set_formation(
-        self,
-        positions: NDArray,
-        metadata: dict[str, Any] | None = None,
+        self, positions: NDArray, metadata: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Store the current formation and return a serialisable summary.
 
@@ -87,16 +85,14 @@ class ARBridge:
             Optional dict with extra formation information (formation name,
             music file, etc.).
 
-        Returns
+        Returns:
         -------
         dict
             A summary ``{"n_drones": int, "positions": list, "metadata": dict}``.
         """
         positions = np.asarray(positions, dtype=float)
         if positions.ndim != 2 or positions.shape[1] != 3:
-            raise ValueError(
-                f"positions must be (n_drones, 3), got shape {positions.shape}"
-            )
+            raise ValueError(f"positions must be (n_drones, 3), got shape {positions.shape}")
         self._positions = positions.copy()
         self._metadata = metadata if metadata is not None else {}
 
@@ -104,21 +100,13 @@ class ARBridge:
         return {
             "n_drones": n_drones,
             "positions": [
-                {
-                    "id": i,
-                    "pos": positions[i].tolist(),
-                    "color": self._get_drone_color(i, n_drones),
-                }
+                {"id": i, "pos": positions[i].tolist(), "color": self._get_drone_color(i, n_drones)}
                 for i in range(n_drones)
             ],
             "metadata": self._metadata,
         }
 
-    def push_trajectory_point(
-        self,
-        time: float,
-        positions: NDArray,
-    ) -> dict[str, Any]:
+    def push_trajectory_point(self, time: float, positions: NDArray) -> dict[str, Any]:
         """Broadcast a single trajectory snapshot to all WebSocket clients.
 
         Parameters
@@ -128,7 +116,7 @@ class ARBridge:
         positions:
             ``(n_drones, 3)`` array of drone positions in cm.
 
-        Returns
+        Returns:
         -------
         dict
             The message payload that was broadcast (for testing).
@@ -140,11 +128,7 @@ class ARBridge:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "time": float(time),
             "drones": [
-                {
-                    "id": i,
-                    "pos": positions[i].tolist(),
-                    "color": self._get_drone_color(i, n_drones),
-                }
+                {"id": i, "pos": positions[i].tolist(), "color": self._get_drone_color(i, n_drones)}
                 for i in range(n_drones)
             ],
         }
@@ -153,9 +137,7 @@ class ARBridge:
             msg = json.dumps(payload)
             for client in list(self._ws_clients):
                 try:
-                    asyncio.get_event_loop().run_until_complete(
-                        client.send_text(msg)
-                    )
+                    asyncio.get_event_loop().run_until_complete(client.send_text(msg))
                 except Exception:  # pragma: no cover
                     logger.debug("Failed to send to a WS client", exc_info=True)
 
@@ -169,7 +151,7 @@ class ARBridge:
         ``move_drone``
             Requires ``drone_id`` (int) and ``new_position`` ([x, y, z]).
 
-        Returns
+        Returns:
         -------
         dict
             ``{"status": "ok", ...}`` on success or
@@ -188,17 +170,13 @@ class ARBridge:
                 }
 
             if self._positions is None:
-                return {
-                    "status": "error",
-                    "detail": "No formation set – call set_formation first",
-                }
+                return {"status": "error", "detail": "No formation set – call set_formation first"}
 
             drone_id = int(drone_id)
             if drone_id < 0 or drone_id >= self._positions.shape[0]:
                 return {
                     "status": "error",
-                    "detail": f"drone_id {drone_id} out of range "
-                    f"[0, {self._positions.shape[0]})",
+                    "detail": f"drone_id {drone_id} out of range [0, {self._positions.shape[0]})",
                 }
 
             self._positions[drone_id] = np.array(new_position, dtype=float)
@@ -261,8 +239,7 @@ class ARBridge:
         async def get_formation() -> JSONResponse:  # type: ignore[misc]
             if self._positions is None:
                 return JSONResponse(
-                    {"status": "error", "detail": "No formation set"},
-                    status_code=404,
+                    {"status": "error", "detail": "No formation set"}, status_code=404
                 )
             n_drones = self._positions.shape[0]
             return JSONResponse(
@@ -299,7 +276,7 @@ class ARBridge:
     def _get_drone_color(idx: int, total: int) -> list[int]:
         """Generate an RGB colour for drone *idx* out of *total* using HSV.
 
-        Returns
+        Returns:
         -------
         list[int]
             ``[r, g, b]`` where each channel is in ``[0, 255]``.

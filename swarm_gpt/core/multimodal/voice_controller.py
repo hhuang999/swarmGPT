@@ -20,12 +20,12 @@ logger = logging.getLogger(__name__)
 # Spatial keyword  ->  filter function(positions) -> boolean mask
 # positions is an (n_drones, 3) array in cm with origin at swarm centre.
 SPATIAL_KEYWORDS: dict[str, Callable[[NDArray], NDArray]] = {
-    "左边": lambda pos: pos[:, 0] < 0,        # left  (x < 0)
-    "右边": lambda pos: pos[:, 0] > 0,        # right (x > 0)
-    "前面": lambda pos: pos[:, 1] > 0,        # front (y > 0)
-    "后面": lambda pos: pos[:, 1] < 0,        # back  (y < 0)
-    "中间": lambda pos: _center_mask(pos),    # centre
-    "外围": lambda pos: ~_center_mask(pos),   # perimeter (not centre)
+    "左边": lambda pos: pos[:, 0] < 0,  # left  (x < 0)
+    "右边": lambda pos: pos[:, 0] > 0,  # right (x > 0)
+    "前面": lambda pos: pos[:, 1] > 0,  # front (y > 0)
+    "后面": lambda pos: pos[:, 1] < 0,  # back  (y < 0)
+    "中间": lambda pos: _center_mask(pos),  # centre
+    "外围": lambda pos: ~_center_mask(pos),  # perimeter (not centre)
     "全部": lambda pos: np.ones(len(pos), dtype=bool),  # all
     "上面": lambda pos: np.ones(len(pos), dtype=bool),  # above (all drones, z-axis context)
     "下面": lambda pos: np.ones(len(pos), dtype=bool),  # below (all drones, z-axis context)
@@ -37,8 +37,8 @@ SPATIAL_KEYWORDS: dict[str, Callable[[NDArray], NDArray]] = {
 ACTION_KEYWORDS: dict[str, dict[str, Any]] = {
     "提高": {"primitive": "move_z", "axis": "z", "sign": +1},
     "降低": {"primitive": "move_z", "axis": "z", "sign": -1},
-    "左移": {"primitive": "move",  "axis": "x", "sign": -1},
-    "右移": {"primitive": "move",  "axis": "x", "sign": +1},
+    "左移": {"primitive": "move", "axis": "x", "sign": -1},
+    "右移": {"primitive": "move", "axis": "x", "sign": +1},
     "旋转": {"primitive": "rotate", "axis": "z", "sign": +1},
     "散开": {"primitive": "scatter_gather", "axis": None, "sign": +1},
     "聚拢": {"primitive": "center", "axis": None, "sign": +1},
@@ -79,22 +79,14 @@ class VoiceController:
         #           "primitive_call": "move_z([2, 4], 30)"}
     """
 
-    def __init__(
-        self,
-        client: Any = None,
-        language: str = "zh",
-    ) -> None:
+    def __init__(self, client: Any = None, language: str = "zh") -> None:
         self.client = client
         self.language = language
 
     # Magnitude pattern: captures a trailing integer (e.g. "30" in "提高30")
     _MAGNITUDE_RE = re.compile(r"(\d+)\s*(?:厘米|cm)?\s*$")
 
-    def parse_command(
-        self,
-        transcript: str,
-        current_positions: NDArray,
-    ) -> dict[str, Any]:
+    def parse_command(self, transcript: str, current_positions: NDArray) -> dict[str, Any]:
         """Parse a Chinese voice transcript into a structured command.
 
         Args:
@@ -145,11 +137,7 @@ class VoiceController:
             "fallback": False,
         }
 
-    def transcribe(
-        self,
-        audio_data: NDArray,
-        sample_rate: int = 16000,
-    ) -> str:
+    def transcribe(self, audio_data: NDArray, sample_rate: int = 16000) -> str:
         """Transcribe audio data to text using the OpenAI Whisper API.
 
         Args:
@@ -192,10 +180,7 @@ class VoiceController:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _match_keyword(
-        transcript: str,
-        keyword_map: dict[str, Any],
-    ) -> str | None:
+    def _match_keyword(transcript: str, keyword_map: dict[str, Any]) -> str | None:
         """Return the first keyword from *keyword_map* found in *transcript*.
 
         Longer keywords are tried first so that "左边" is not shadowed by "左".
@@ -217,11 +202,7 @@ class VoiceController:
         return _DEFAULT_MAGNITUDE
 
     @staticmethod
-    def _make_call(
-        action: str,
-        drone_ids: list[int],
-        magnitude: int,
-    ) -> str:
+    def _make_call(action: str, drone_ids: list[int], magnitude: int) -> str:
         """Build a primitive-call string for the given action and drones.
 
         Drone IDs in the call are **1-indexed** (matching LLM / primitive
@@ -259,9 +240,7 @@ class VoiceController:
 
     @staticmethod
     def _fallback_parse(
-        transcript: str,
-        positions: NDArray,
-        drone_ids: list[int],
+        transcript: str, positions: NDArray, drone_ids: list[int]
     ) -> dict[str, Any]:
         """Return a fallback result indicating the command was not understood.
 

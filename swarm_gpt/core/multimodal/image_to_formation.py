@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import cv2
 import numpy as np
@@ -52,10 +52,7 @@ class FlightBounds:
 
 def _default_flight_bounds() -> FlightBounds:
     """Return the same default limits used throughout the project."""
-    return FlightBounds(
-        lower=np.array([-2.0, -2.0, 0.0]),
-        upper=np.array([2.0, 2.0, 2.0]),
-    )
+    return FlightBounds(lower=np.array([-2.0, -2.0, 0.0]), upper=np.array([2.0, 2.0, 2.0]))
 
 
 @dataclass
@@ -79,11 +76,7 @@ class ImageFormationConverter:
         flight_height: Default z-coordinate for the formation in **cm**.
     """
 
-    def __init__(
-        self,
-        provider: LLMProvider | None = None,
-        flight_height: float = 100.0,
-    ) -> None:
+    def __init__(self, provider: LLMProvider | None = None, flight_height: float = 100.0) -> None:
         self._provider = provider
         self._flight_height = flight_height
 
@@ -202,9 +195,7 @@ class ImageFormationConverter:
             # No contours found -- fall back to a uniform circle
             logger.warning("No contours detected; falling back to circle formation")
             angles = np.linspace(0, 2 * np.pi, n_points, endpoint=False)
-            return np.column_stack(
-                [0.5 + 0.4 * np.cos(angles), 0.5 + 0.4 * np.sin(angles)]
-            )
+            return np.column_stack([0.5 + 0.4 * np.cos(angles), 0.5 + 0.4 * np.sin(angles)])
 
         # Merge all contour points and sample uniformly along the combined path
         all_pts = np.vstack(contours).squeeze()  # shape (N, 2)
@@ -254,7 +245,6 @@ class ImageFormationConverter:
 
         # Encode image as base64 for the provider
         import base64
-        from io import BytesIO
 
         success, encoded = cv2.imencode(".png", image)
         if not success:
@@ -262,10 +252,7 @@ class ImageFormationConverter:
         b64 = base64.b64encode(encoded.tobytes()).decode("ascii")
         image_source = f"data:image/png;base64,{b64}"
 
-        result = self._provider.analyze_image(
-            prompt=prompt,
-            image_source=image_source,
-        )
+        result = self._provider.analyze_image(prompt=prompt, image_source=image_source)
 
         return self._parse_vlm_points(result.content, n_points)
 
@@ -353,9 +340,7 @@ class ImageFormationConverter:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _resolve_bounds(
-        bounds: FlightBounds | dict[str, NDArray] | None,
-    ) -> FlightBounds:
+    def _resolve_bounds(bounds: FlightBounds | dict[str, NDArray] | None) -> FlightBounds:
         """Normalise *bounds* to a ``FlightBounds`` instance."""
         if bounds is None:
             return _default_flight_bounds()
@@ -372,6 +357,7 @@ class ImageFormationConverter:
 # ---------------------------------------------------------------------------
 # Module-level helpers
 # ---------------------------------------------------------------------------
+
 
 def _to_greyscale(image: NDArray) -> NDArray:
     """Ensure *image* is single-channel greyscale."""

@@ -11,10 +11,10 @@ import os
 import numpy as np
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_swarm_pos(n_drones: int = 6) -> np.ndarray:
     """Create *n_drones* positions in a grid, values in cm."""
@@ -30,10 +30,7 @@ def _make_swarm_pos(n_drones: int = 6) -> np.ndarray:
 
 def _make_limits() -> dict[str, np.ndarray]:
     """Return spatial limits matching the project convention (metres)."""
-    return {
-        "lower": np.array([-2.0, -2.0, 0.0]),
-        "upper": np.array([2.0, 2.0, 2.0]),
-    }
+    return {"lower": np.array([-2.0, -2.0, 0.0]), "upper": np.array([2.0, 2.0, 2.0])}
 
 
 def _restore_exception_module() -> None:
@@ -44,8 +41,6 @@ def _restore_exception_module() -> None:
     real module so that subsequent imports of ``swarm_gpt.providers`` (which
     depends on ``LLMException``) succeed.
     """
-    import importlib
-    import importlib.util
     import sys
 
     current = sys.modules.get("swarm_gpt.exception")
@@ -139,9 +134,9 @@ class TestPrimitiveEcosystem:
 
     def test_multimodal_imports(self) -> None:
         """All multimodal classes must import cleanly."""
+        from swarm_gpt.core.multimodal.ar_bridge import ARBridge
         from swarm_gpt.core.multimodal.image_to_formation import ImageFormationConverter
         from swarm_gpt.core.multimodal.voice_controller import VoiceController
-        from swarm_gpt.core.multimodal.ar_bridge import ARBridge
 
         assert callable(ImageFormationConverter)
         assert callable(VoiceController)
@@ -177,11 +172,7 @@ class TestPrimitiveExecution:
         limits = _make_limits()
 
         positions, waypoints = firework(
-            params=(5, 150, 80),
-            swarm_pos=swarm_pos.copy(),
-            tstart=0.0,
-            tend=5.0,
-            limits=limits,
+            params=(5, 150, 80), swarm_pos=swarm_pos.copy(), tstart=0.0, tend=5.0, limits=limits
         )
 
         # positions is an ndarray of shape (n_drones, 3)
@@ -208,11 +199,7 @@ class TestPrimitiveExecution:
         limits = _make_limits()
 
         positions, waypoints = scatter_gather(
-            params=(4, 100, 100),
-            swarm_pos=swarm_pos.copy(),
-            tstart=0.0,
-            tend=4.0,
-            limits=limits,
+            params=(4, 100, 100), swarm_pos=swarm_pos.copy(), tstart=0.0, tend=4.0, limits=limits
         )
 
         assert isinstance(positions, np.ndarray)
@@ -230,9 +217,7 @@ class TestPrimitiveExecution:
         times = sorted(waypoints.keys())
         mid_idx = len(times) // 2
         mid_time = times[mid_idx]
-        mid_positions = np.array(
-            [waypoints[mid_time][i] for i in range(6)]
-        )
+        mid_positions = np.array([waypoints[mid_time][i] for i in range(6)])
         mid_spread = np.max(np.linalg.norm(mid_positions - centroid, axis=1))
 
         # Mid-point spread should be >= start spread (drones expand)

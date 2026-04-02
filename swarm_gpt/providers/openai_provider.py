@@ -130,12 +130,7 @@ class OpenAIProvider(LLMProvider):
             raise LLMException(f"OpenAI transcription failed: {exc}") from exc
 
     def analyze_image(
-        self,
-        prompt: str,
-        image_source: str,
-        *,
-        model: str | None = None,
-        max_tokens: int = 4096,
+        self, prompt: str, image_source: str, *, model: str | None = None, max_tokens: int = 4096
     ) -> ImageAnalysisResult:
         """Analyse an image using OpenAI GPT-4o Vision.
 
@@ -153,13 +148,7 @@ class OpenAIProvider(LLMProvider):
         """
         image_content = self._build_image_content(image_source)
         messages: list[dict[str, Any]] = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    image_content,
-                ],
-            }
+            {"role": "user", "content": [{"type": "text", "text": prompt}, image_content]}
         ]
         result = self.complete(
             messages, model=model or self._default_vision_model, max_tokens=max_tokens

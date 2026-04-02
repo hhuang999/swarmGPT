@@ -3,16 +3,12 @@
 import numpy as np
 import pytest
 
-from swarm_gpt.core.multimodal.voice_controller import (
-    ACTION_KEYWORDS,
-    SPATIAL_KEYWORDS,
-    VoiceController,
-)
-
+from swarm_gpt.core.multimodal.voice_controller import SPATIAL_KEYWORDS, VoiceController
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_positions() -> np.ndarray:
     """Create a 6-drone position array in cm (n_drones, 3).
@@ -27,14 +23,17 @@ def _make_positions() -> np.ndarray:
     Front (y>0): drones 3, 4, 5
     Back  (y<0): drones 0, 1, 2
     """
-    return np.array([
-        [-90, -60, 100],
-        [-30, -60, 100],
-        [ 30, -60, 100],
-        [-90,  60, 100],
-        [-30,  60, 100],
-        [ 30,  60, 100],
-    ], dtype=float)
+    return np.array(
+        [
+            [-90, -60, 100],
+            [-30, -60, 100],
+            [30, -60, 100],
+            [-90, 60, 100],
+            [-30, 60, 100],
+            [30, 60, 100],
+        ],
+        dtype=float,
+    )
 
 
 def _make_asymmetric_positions() -> np.ndarray:
@@ -43,20 +42,24 @@ def _make_asymmetric_positions() -> np.ndarray:
     Centre drones (indices 3, 4) are near the origin.
     Perimeter drones (indices 0, 1, 2, 5, 6) are farther away.
     """
-    return np.array([
-        [-120, -80, 100],
-        [ -40, -90, 100],
-        [ 100, -70, 100],
-        [ -10,   5, 100],
-        [  15, -10, 100],
-        [ 110,  80, 100],
-        [ -90, 100, 100],
-    ], dtype=float)
+    return np.array(
+        [
+            [-120, -80, 100],
+            [-40, -90, 100],
+            [100, -70, 100],
+            [-10, 5, 100],
+            [15, -10, 100],
+            [110, 80, 100],
+            [-90, 100, 100],
+        ],
+        dtype=float,
+    )
 
 
 # ---------------------------------------------------------------------------
 # Tests – spatial keyword detection
 # ---------------------------------------------------------------------------
+
 
 class TestSpatialKeywords:
     """Verify that spatial filters select the correct drones."""
@@ -105,6 +108,7 @@ class TestSpatialKeywords:
 # ---------------------------------------------------------------------------
 # Tests – full command parsing
 # ---------------------------------------------------------------------------
+
 
 class TestParseCommand:
     """Test parse_command with various Chinese transcripts."""
@@ -225,6 +229,7 @@ class TestParseCommand:
 # ---------------------------------------------------------------------------
 # Tests – _make_call
 # ---------------------------------------------------------------------------
+
 
 class TestMakeCall:
     """Unit tests for the _make_call helper."""

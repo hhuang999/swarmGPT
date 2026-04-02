@@ -82,12 +82,7 @@ class LLMProvider(ABC):
         raise NotImplementedError(f"{self.__class__.__name__} does not support transcription")
 
     def analyze_image(
-        self,
-        prompt: str,
-        image_source: str,
-        *,
-        model: str | None = None,
-        max_tokens: int = 4096,
+        self, prompt: str, image_source: str, *, model: str | None = None, max_tokens: int = 4096
     ) -> ImageAnalysisResult:
         """Analyse an image with a vision-capable model.
 

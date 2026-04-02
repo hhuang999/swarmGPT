@@ -16,9 +16,7 @@ except ImportError:
     AnthropicProvider = None  # type: ignore[assignment,misc]
 
 
-def get_provider(
-    name: str, *, api_key: str | None = None, **kwargs: object
-) -> LLMProvider:
+def get_provider(name: str, *, api_key: str | None = None, **kwargs: object) -> LLMProvider:
     """Factory function that returns the appropriate LLM provider.
 
     Args:
@@ -42,9 +40,7 @@ def get_provider(
 
     name_lower = name.lower().strip()
     if name_lower not in providers:
-        raise ValueError(
-            f"Unknown provider '{name}'. Available providers: {', '.join(providers)}"
-        )
+        raise ValueError(f"Unknown provider '{name}'. Available providers: {', '.join(providers)}")
 
     provider_cls = providers[name_lower]
     return provider_cls(api_key=api_key, **kwargs)  # type: ignore[call-arg]

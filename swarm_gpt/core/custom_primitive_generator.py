@@ -10,10 +10,9 @@ from __future__ import annotations
 import inspect
 import json
 import logging
-import sys
 import types
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -129,14 +128,11 @@ class PrimitiveSandbox:
         try:
             from RestrictedPython import compile_restricted, safe_globals
             from RestrictedPython.Eval import (
-                default_guarded_getiter,
-                default_guarded_getitem,
                 default_guarded_getattr,
+                default_guarded_getitem,
+                default_guarded_getiter,
             )
-            from RestrictedPython.Guards import (
-                guarded_unpack_sequence,
-                safer_getattr,
-            )
+            from RestrictedPython.Guards import guarded_unpack_sequence, safer_getattr
         except ImportError as exc:
             raise ImportError(
                 "RestrictedPython is required for the custom primitive sandbox. "
@@ -145,9 +141,7 @@ class PrimitiveSandbox:
 
         result = compile_restricted(code, filename="<custom_primitive>", mode="exec")
         if result.errors:
-            raise SyntaxError(
-                "RestrictedPython compilation errors: " + "\n".join(result.errors)
-            )
+            raise SyntaxError("RestrictedPython compilation errors: " + "\n".join(result.errors))
 
         self._compiled = result.code  # type: ignore[assignment]
         return self._compiled  # type: ignore[return-value]
@@ -238,10 +232,7 @@ class CustomPrimitiveValidator:
         An empty list means the function passed all checks.
         """
         if limits is None:
-            limits = {
-                "lower": np.array([-2.0, -2.0, 0.0]),
-                "upper": np.array([2.0, 2.0, 2.0]),
-            }
+            limits = {"lower": np.array([-2.0, -2.0, 0.0]), "upper": np.array([2.0, 2.0, 2.0])}
 
         errors: List[str] = []
 
@@ -263,8 +254,7 @@ class CustomPrimitiveValidator:
 
         if not isinstance(result, tuple) or len(result) != 2:
             errors.append(
-                "Function must return a tuple (final_pos, waypoints), "
-                f"got {type(result).__name__}"
+                f"Function must return a tuple (final_pos, waypoints), got {type(result).__name__}"
             )
             return errors
 
@@ -295,11 +285,7 @@ class CustomPrimitiveValidator:
                 if len(positions) >= n_drones:
                     break
                 positions.append(
-                    [
-                        c * spacing - cols * spacing / 2,
-                        r * spacing - rows * spacing / 2,
-                        100.0,
-                    ]
+                    [c * spacing - cols * spacing / 2, r * spacing - rows * spacing / 2, 100.0]
                 )
         return np.array(positions[:n_drones], dtype=float)
 
@@ -315,8 +301,7 @@ class CustomPrimitiveValidator:
         expected = list(REQUIRED_PARAMS)
         if params != expected:
             return [
-                f"Function signature must be ({', '.join(expected)}), "
-                f"got ({', '.join(params)})"
+                f"Function signature must be ({', '.join(expected)}), got ({', '.join(params)})"
             ]
         return []
 
@@ -343,10 +328,7 @@ class CustomPrimitiveValidator:
         return errors
 
     def _check_velocity(
-        self,
-        waypoints: Dict[float, Dict[int, NDArray]],
-        tstart: float,
-        tend: float,
+        self, waypoints: Dict[float, Dict[int, NDArray]], tstart: float, tend: float
     ) -> List[str]:
         """Check that no drone exceeds the maximum velocity."""
         errors: List[str] = []
@@ -375,10 +357,7 @@ class CustomPrimitiveValidator:
             prev_time = curr_time
         return errors
 
-    def _check_collisions(
-        self,
-        waypoints: Dict[float, Dict[int, NDArray]],
-    ) -> List[str]:
+    def _check_collisions(self, waypoints: Dict[float, Dict[int, NDArray]]) -> List[str]:
         """Check that no two drones are closer than the minimum separation."""
         errors: List[str] = []
         for t, wp in waypoints.items():

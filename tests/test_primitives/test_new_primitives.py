@@ -11,8 +11,7 @@ from numpy.typing import NDArray
 
 # Import motion_primitives directly (bypass swarm_gpt.core.__init__ which triggers heavy deps)
 _spec = importlib.util.spec_from_file_location(
-    "motion_primitives",
-    "swarm_gpt/core/motion_primitives.py",
+    "motion_primitives", "swarm_gpt/core/motion_primitives.py"
 )
 # Provide the required swarm_gpt.exception module
 _exc_mod = types.ModuleType("swarm_gpt.exception")
@@ -49,16 +48,15 @@ def _make_swarm_pos(n_drones: int = 6) -> NDArray:
         for c in range(cols):
             if len(positions) >= n_drones:
                 break
-            positions.append([c * spacing - cols * spacing / 2, r * spacing - rows * spacing / 2, 100])
+            positions.append(
+                [c * spacing - cols * spacing / 2, r * spacing - rows * spacing / 2, 100]
+            )
     return np.array(positions[:n_drones], dtype=float)
 
 
 def _make_limits() -> dict[str, NDArray]:
     """Create standard limits dict. Values are in meters."""
-    return {
-        "lower": np.array([-2.0, -2.0, 0.0]),
-        "upper": np.array([2.0, 2.0, 2.0]),
-    }
+    return {"lower": np.array([-2.0, -2.0, 0.0]), "upper": np.array([2.0, 2.0, 2.0])}
 
 
 class TestFirework:
@@ -109,7 +107,7 @@ class TestFirework:
         mid_idx = len(times) // 2
         mid_wp = waypoints[times[mid_idx]]
         positions_mid = np.array(list(mid_wp.values()))
-        spread_mid = np.max(np.linalg.norm(positions_mid[:, :2], axis=1))
+        np.max(np.linalg.norm(positions_mid[:, :2], axis=1))  # noqa: F841
 
 
 class TestPendulum:
@@ -329,23 +327,30 @@ class TestOrbit:
 class TestRegistry:
     """Tests for the motion_primitives registry entries."""
 
-    @pytest.mark.parametrize("name", ["firework", "pendulum", "scatter_gather", "form_heart", "form_line", "orbit"])
+    @pytest.mark.parametrize(
+        "name", ["firework", "pendulum", "scatter_gather", "form_heart", "form_line", "orbit"]
+    )
     def test_primitive_in_registry(self, name):
         assert name in motion_primitives
 
-    @pytest.mark.parametrize("name", ["firework", "pendulum", "scatter_gather", "form_heart", "form_line", "orbit"])
+    @pytest.mark.parametrize(
+        "name", ["firework", "pendulum", "scatter_gather", "form_heart", "form_line", "orbit"]
+    )
     def test_primitive_lookup_by_name(self, name):
         func = primitive_by_name(name)
         assert callable(func)
 
-    @pytest.mark.parametrize("name,expected_n_args", [
-        ("firework", 3),
-        ("pendulum", 2),
-        ("scatter_gather", 3),
-        ("form_heart", 2),
-        ("form_line", 2),
-        ("orbit", 3),
-    ])
+    @pytest.mark.parametrize(
+        "name,expected_n_args",
+        [
+            ("firework", 3),
+            ("pendulum", 2),
+            ("scatter_gather", 3),
+            ("form_heart", 2),
+            ("form_line", 2),
+            ("orbit", 3),
+        ],
+    )
     def test_n_args_in_registry(self, name, expected_n_args):
         assert motion_primitives[name]["n_args"] == expected_n_args
 

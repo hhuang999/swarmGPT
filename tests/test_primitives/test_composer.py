@@ -5,17 +5,13 @@ import pytest
 import yaml
 from numpy.typing import NDArray
 
-from swarm_gpt.core.primitive_composer import (
-    COMPOSITION_OPERATORS,
-    CompositionError,
-    PrimitiveComposer,
-)
 from swarm_gpt.core.motion_primitives import primitive_by_name
-
+from swarm_gpt.core.primitive_composer import CompositionError, PrimitiveComposer
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_swarm_pos(n_drones: int = 6) -> NDArray:
     """Create a simple grid of drone positions in cm."""
@@ -27,16 +23,15 @@ def _make_swarm_pos(n_drones: int = 6) -> NDArray:
         for c in range(cols):
             if len(positions) >= n_drones:
                 break
-            positions.append([c * spacing - cols * spacing / 2, r * spacing - rows * spacing / 2, 100])
+            positions.append(
+                [c * spacing - cols * spacing / 2, r * spacing - rows * spacing / 2, 100]
+            )
     return np.array(positions[:n_drones], dtype=float)
 
 
 def _make_limits() -> dict[str, NDArray]:
     """Create standard limits dict. Values are in meters."""
-    return {
-        "lower": np.array([-2.0, -2.0, 0.0]),
-        "upper": np.array([2.0, 2.0, 2.0]),
-    }
+    return {"lower": np.array([-2.0, -2.0, 0.0]), "upper": np.array([2.0, 2.0, 2.0])}
 
 
 def _leaf(primitive: str, params: list) -> dict:
@@ -47,6 +42,7 @@ def _leaf(primitive: str, params: list) -> dict:
 # ---------------------------------------------------------------------------
 # Tests for is_composition
 # ---------------------------------------------------------------------------
+
 
 class TestIsComposition:
     """Tests for PrimitiveComposer.is_composition()."""
@@ -80,6 +76,7 @@ class TestIsComposition:
 # Tests for parse_composition_yaml
 # ---------------------------------------------------------------------------
 
+
 class TestParseCompositionYaml:
     """Tests for PrimitiveComposer.parse_composition_yaml()."""
 
@@ -106,137 +103,147 @@ class TestParseCompositionYaml:
     def test_unknown_primitive_in_child_raises(self):
         composer = PrimitiveComposer()
         with pytest.raises(CompositionError, match="Unknown primitive"):
-            composer.parse_composition_yaml({
-                "op": "sequence",
-                "children": [{"primitive": "does_not_exist", "params": []}],
-            })
+            composer.parse_composition_yaml(
+                {"op": "sequence", "children": [{"primitive": "does_not_exist", "params": []}]}
+            )
 
     def test_missing_params_in_child_raises(self):
         composer = PrimitiveComposer()
         with pytest.raises(CompositionError, match="must have a 'params' key"):
-            composer.parse_composition_yaml({
-                "op": "sequence",
-                "children": [{"primitive": "rotate"}],
-            })
+            composer.parse_composition_yaml(
+                {"op": "sequence", "children": [{"primitive": "rotate"}]}
+            )
 
     def test_wrong_param_count_raises(self):
         composer = PrimitiveComposer()
         with pytest.raises(CompositionError, match="expects 2 params, got 1"):
-            composer.parse_composition_yaml({
-                "op": "sequence",
-                "children": [{"primitive": "rotate", "params": [30]}],
-            })
+            composer.parse_composition_yaml(
+                {"op": "sequence", "children": [{"primitive": "rotate", "params": [30]}]}
+            )
 
     def test_child_without_op_or_primitive_raises(self):
         composer = PrimitiveComposer()
         with pytest.raises(CompositionError, match="must have 'op' or 'primitive' key"):
-            composer.parse_composition_yaml({
-                "op": "sequence",
-                "children": [{"unknown": "value"}],
-            })
+            composer.parse_composition_yaml({"op": "sequence", "children": [{"unknown": "value"}]})
 
     def test_blend_missing_weight_raises(self):
         composer = PrimitiveComposer()
         with pytest.raises(CompositionError, match="'blend' composition must have a 'weight' key"):
-            composer.parse_composition_yaml({
-                "op": "blend",
-                "weight": None,
-                "children": [
-                    {"primitive": "rotate", "params": [30, "z"]},
-                    {"primitive": "rotate", "params": [-30, "z"]},
-                ],
-            })
+            composer.parse_composition_yaml(
+                {
+                    "op": "blend",
+                    "weight": None,
+                    "children": [
+                        {"primitive": "rotate", "params": [30, "z"]},
+                        {"primitive": "rotate", "params": [-30, "z"]},
+                    ],
+                }
+            )
 
     def test_blend_weight_out_of_range_raises(self):
         composer = PrimitiveComposer()
         with pytest.raises(CompositionError, match="weight must be between 0 and 1"):
-            composer.parse_composition_yaml({
+            composer.parse_composition_yaml(
+                {
+                    "op": "blend",
+                    "weight": 1.5,
+                    "children": [
+                        {"primitive": "rotate", "params": [30, "z"]},
+                        {"primitive": "rotate", "params": [-30, "z"]},
+                    ],
+                }
+            )
+
+    def test_valid_blend_parses(self):
+        composer = PrimitiveComposer()
+        result = composer.parse_composition_yaml(
+            {
                 "op": "blend",
-                "weight": 1.5,
+                "weight": 0.7,
                 "children": [
                     {"primitive": "rotate", "params": [30, "z"]},
                     {"primitive": "rotate", "params": [-30, "z"]},
                 ],
-            })
-
-    def test_valid_blend_parses(self):
-        composer = PrimitiveComposer()
-        result = composer.parse_composition_yaml({
-            "op": "blend",
-            "weight": 0.7,
-            "children": [
-                {"primitive": "rotate", "params": [30, "z"]},
-                {"primitive": "rotate", "params": [-30, "z"]},
-            ],
-        })
+            }
+        )
         assert result["op"] == "blend"
         assert result["weight"] == 0.7
         assert len(result["children"]) == 2
 
     def test_valid_sequence_parses(self):
         composer = PrimitiveComposer()
-        result = composer.parse_composition_yaml({
-            "op": "sequence",
-            "children": [
-                {"primitive": "rotate", "params": [30, "z"]},
-                {"primitive": "rotate", "params": [-30, "z"]},
-            ],
-        })
+        result = composer.parse_composition_yaml(
+            {
+                "op": "sequence",
+                "children": [
+                    {"primitive": "rotate", "params": [30, "z"]},
+                    {"primitive": "rotate", "params": [-30, "z"]},
+                ],
+            }
+        )
         assert result["op"] == "sequence"
         assert len(result["children"]) == 2
 
     def test_valid_parallel_parses(self):
         composer = PrimitiveComposer()
-        result = composer.parse_composition_yaml({
-            "op": "parallel",
-            "children": [
-                {"primitive": "rotate", "params": [30, "z"]},
-                {"primitive": "rotate", "params": [-30, "z"]},
-            ],
-        })
+        result = composer.parse_composition_yaml(
+            {
+                "op": "parallel",
+                "children": [
+                    {"primitive": "rotate", "params": [30, "z"]},
+                    {"primitive": "rotate", "params": [-30, "z"]},
+                ],
+            }
+        )
         assert result["op"] == "parallel"
         assert len(result["children"]) == 2
 
     def test_parallel_with_drone_groups(self):
         composer = PrimitiveComposer()
-        result = composer.parse_composition_yaml({
-            "op": "parallel",
-            "drone_groups": [[0, 1, 2], [3, 4, 5]],
-            "children": [
-                {"primitive": "rotate", "params": [30, "z"]},
-                {"primitive": "rotate", "params": [-30, "z"]},
-            ],
-        })
+        result = composer.parse_composition_yaml(
+            {
+                "op": "parallel",
+                "drone_groups": [[0, 1, 2], [3, 4, 5]],
+                "children": [
+                    {"primitive": "rotate", "params": [30, "z"]},
+                    {"primitive": "rotate", "params": [-30, "z"]},
+                ],
+            }
+        )
         assert result["drone_groups"] == [[0, 1, 2], [3, 4, 5]]
 
     def test_parallel_mismatched_drone_groups_raises(self):
         composer = PrimitiveComposer()
         with pytest.raises(CompositionError, match="same length as children"):
-            composer.parse_composition_yaml({
-                "op": "parallel",
-                "drone_groups": [[0, 1]],
-                "children": [
-                    {"primitive": "rotate", "params": [30, "z"]},
-                    {"primitive": "rotate", "params": [-30, "z"]},
-                ],
-            })
+            composer.parse_composition_yaml(
+                {
+                    "op": "parallel",
+                    "drone_groups": [[0, 1]],
+                    "children": [
+                        {"primitive": "rotate", "params": [30, "z"]},
+                        {"primitive": "rotate", "params": [-30, "z"]},
+                    ],
+                }
+            )
 
     def test_nested_composition_parses(self):
         composer = PrimitiveComposer()
-        result = composer.parse_composition_yaml({
-            "op": "sequence",
-            "children": [
-                {"primitive": "rotate", "params": [30, "z"]},
-                {
-                    "op": "blend",
-                    "weight": 0.5,
-                    "children": [
-                        {"primitive": "rotate", "params": [10, "z"]},
-                        {"primitive": "rotate", "params": [-10, "z"]},
-                    ],
-                },
-            ],
-        })
+        result = composer.parse_composition_yaml(
+            {
+                "op": "sequence",
+                "children": [
+                    {"primitive": "rotate", "params": [30, "z"]},
+                    {
+                        "op": "blend",
+                        "weight": 0.5,
+                        "children": [
+                            {"primitive": "rotate", "params": [10, "z"]},
+                            {"primitive": "rotate", "params": [-10, "z"]},
+                        ],
+                    },
+                ],
+            }
+        )
         assert result["op"] == "sequence"
         assert len(result["children"]) == 2
         assert result["children"][1]["op"] == "blend"
@@ -246,19 +253,22 @@ class TestParseCompositionYaml:
 # Tests for execute_composed - Sequence
 # ---------------------------------------------------------------------------
 
+
 class TestExecuteSequence:
     """Tests for the sequence composition operator."""
 
     def test_sequence_two_rotations(self):
         """Two rotations executed sequentially should produce waypoints across the full time range."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "sequence",
-            "children": [
-                {"primitive": "rotate", "params": [30, "z"]},
-                {"primitive": "rotate", "params": [-30, "z"]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "sequence",
+                "children": [
+                    {"primitive": "rotate", "params": [30, "z"]},
+                    {"primitive": "rotate", "params": [-30, "z"]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 4.0, limits)
@@ -271,13 +281,15 @@ class TestExecuteSequence:
     def test_sequence_returns_all_waypoints(self):
         """All child waypoints should be present in the output."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "sequence",
-            "children": [
-                {"primitive": "move_z", "params": [[1, 2, 3, 4], 10]},
-                {"primitive": "move_z", "params": [[1, 2, 3, 4], -10]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "sequence",
+                "children": [
+                    {"primitive": "move_z", "params": [[1, 2, 3, 4], 10]},
+                    {"primitive": "move_z", "params": [[1, 2, 3, 4], -10]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         _, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 4.0, limits)
@@ -288,12 +300,9 @@ class TestExecuteSequence:
     def test_sequence_single_child(self):
         """A sequence with a single child should still work."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "sequence",
-            "children": [
-                {"primitive": "rotate", "params": [15, "z"]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {"op": "sequence", "children": [{"primitive": "rotate", "params": [15, "z"]}]}
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 2.0, limits)
@@ -306,20 +315,23 @@ class TestExecuteSequence:
 # Tests for execute_composed - Parallel
 # ---------------------------------------------------------------------------
 
+
 class TestExecuteParallel:
     """Tests for the parallel composition operator."""
 
     def test_parallel_with_explicit_groups(self):
         """Parallel with explicit drone_groups should only move assigned drones."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "parallel",
-            "drone_groups": [[0, 1], [2, 3]],
-            "children": [
-                {"primitive": "move_z", "params": [[1, 2], 20]},
-                {"primitive": "move_z", "params": [[1, 2], -20]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "parallel",
+                "drone_groups": [[0, 1], [2, 3]],
+                "children": [
+                    {"primitive": "move_z", "params": [[1, 2], 20]},
+                    {"primitive": "move_z", "params": [[1, 2], -20]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 2.0, limits)
@@ -330,13 +342,15 @@ class TestExecuteParallel:
     def test_parallel_auto_split_groups(self):
         """Parallel without drone_groups should auto-split drones."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "parallel",
-            "children": [
-                {"primitive": "move_z", "params": [[1, 2], 10]},
-                {"primitive": "move_z", "params": [[1, 2], 10]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "parallel",
+                "children": [
+                    {"primitive": "move_z", "params": [[1, 2], 10]},
+                    {"primitive": "move_z", "params": [[1, 2], 10]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 2.0, limits)
@@ -351,14 +365,16 @@ class TestExecuteParallel:
     def test_parallel_waypoints_at_same_times(self):
         """Parallel children should produce waypoints at the same timesteps."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "parallel",
-            "drone_groups": [[0, 1], [2, 3]],
-            "children": [
-                {"primitive": "move_z", "params": [[1, 2], 20]},
-                {"primitive": "move_z", "params": [[1, 2], -20]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "parallel",
+                "drone_groups": [[0, 1], [2, 3]],
+                "children": [
+                    {"primitive": "move_z", "params": [[1, 2], 20]},
+                    {"primitive": "move_z", "params": [[1, 2], -20]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         _, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 2.0, limits)
@@ -372,13 +388,15 @@ class TestExecuteParallel:
     def test_parallel_uneven_split(self):
         """Parallel with 5 drones split into 2 groups."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "parallel",
-            "children": [
-                {"primitive": "move_z", "params": [[1, 2, 3], 10]},
-                {"primitive": "move_z", "params": [[1, 2], -10]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "parallel",
+                "children": [
+                    {"primitive": "move_z", "params": [[1, 2, 3], 10]},
+                    {"primitive": "move_z", "params": [[1, 2], -10]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(5)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 2.0, limits)
@@ -390,19 +408,22 @@ class TestExecuteParallel:
 # Tests for execute_composed - Blend
 # ---------------------------------------------------------------------------
 
+
 class TestExecuteBlend:
     """Tests for the blend composition operator."""
 
     def test_blend_returns_correct_types(self):
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "blend",
-            "weight": 0.5,
-            "children": [
-                {"primitive": "move_z", "params": [[1, 2, 3, 4], 20]},
-                {"primitive": "move_z", "params": [[1, 2, 3, 4], -20]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "blend",
+                "weight": 0.5,
+                "children": [
+                    {"primitive": "move_z", "params": [[1, 2, 3, 4], 20]},
+                    {"primitive": "move_z", "params": [[1, 2, 3, 4], -20]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 2.0, limits)
@@ -414,14 +435,16 @@ class TestExecuteBlend:
     def test_blend_weighted_average(self):
         """With weight=0.5, blended positions should be the midpoint."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "blend",
-            "weight": 0.5,
-            "children": [
-                {"primitive": "move_z", "params": [[1], 200]},
-                {"primitive": "move_z", "params": [[1], -200]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "blend",
+                "weight": 0.5,
+                "children": [
+                    {"primitive": "move_z", "params": [[1], 200]},
+                    {"primitive": "move_z", "params": [[1], -200]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(1)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 2.0, limits)
@@ -437,14 +460,16 @@ class TestExecuteBlend:
     def test_blend_weight_one_favors_first(self):
         """With weight=1.0, result should match the first child."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "blend",
-            "weight": 1.0,
-            "children": [
-                {"primitive": "move_z", "params": [[1], 50]},
-                {"primitive": "move_z", "params": [[1], -50]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "blend",
+                "weight": 1.0,
+                "children": [
+                    {"primitive": "move_z", "params": [[1], 50]},
+                    {"primitive": "move_z", "params": [[1], -50]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(1)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 2.0, limits)
@@ -462,14 +487,16 @@ class TestExecuteBlend:
     def test_blend_weight_zero_favors_second(self):
         """With weight=0.0, result should match the second child."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "blend",
-            "weight": 0.0,
-            "children": [
-                {"primitive": "move_z", "params": [[1], 50]},
-                {"primitive": "move_z", "params": [[1], -50]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "blend",
+                "weight": 0.0,
+                "children": [
+                    {"primitive": "move_z", "params": [[1], 50]},
+                    {"primitive": "move_z", "params": [[1], -50]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(1)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 2.0, limits)
@@ -487,13 +514,13 @@ class TestExecuteBlend:
     def test_blend_requires_two_children(self):
         """Blend with != 2 children should raise."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "blend",
-            "weight": 0.5,
-            "children": [
-                {"primitive": "rotate", "params": [30, "z"]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "blend",
+                "weight": 0.5,
+                "children": [{"primitive": "rotate", "params": [30, "z"]}],
+            }
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         with pytest.raises(CompositionError, match="exactly 2 children"):
@@ -502,14 +529,16 @@ class TestExecuteBlend:
     def test_blend_all_drones_in_waypoints(self):
         """All drones should appear in every blended waypoint."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "blend",
-            "weight": 0.5,
-            "children": [
-                {"primitive": "rotate", "params": [30, "z"]},
-                {"primitive": "rotate", "params": [-30, "z"]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "blend",
+                "weight": 0.5,
+                "children": [
+                    {"primitive": "rotate", "params": [30, "z"]},
+                    {"primitive": "rotate", "params": [-30, "z"]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(6)
         limits = _make_limits()
         _, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 3.0, limits)
@@ -523,33 +552,36 @@ class TestExecuteBlend:
 # Tests for nested compositions
 # ---------------------------------------------------------------------------
 
+
 class TestNestedComposition:
     """Tests for nested composition trees."""
 
     def test_sequence_of_blends(self):
         """A sequence containing blend operators."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "sequence",
-            "children": [
-                {
-                    "op": "blend",
-                    "weight": 0.7,
-                    "children": [
-                        {"primitive": "rotate", "params": [15, "z"]},
-                        {"primitive": "rotate", "params": [-15, "z"]},
-                    ],
-                },
-                {
-                    "op": "blend",
-                    "weight": 0.3,
-                    "children": [
-                        {"primitive": "rotate", "params": [10, "z"]},
-                        {"primitive": "rotate", "params": [-10, "z"]},
-                    ],
-                },
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "sequence",
+                "children": [
+                    {
+                        "op": "blend",
+                        "weight": 0.7,
+                        "children": [
+                            {"primitive": "rotate", "params": [15, "z"]},
+                            {"primitive": "rotate", "params": [-15, "z"]},
+                        ],
+                    },
+                    {
+                        "op": "blend",
+                        "weight": 0.3,
+                        "children": [
+                            {"primitive": "rotate", "params": [10, "z"]},
+                            {"primitive": "rotate", "params": [-10, "z"]},
+                        ],
+                    },
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 4.0, limits)
@@ -561,27 +593,29 @@ class TestNestedComposition:
     def test_deep_nesting(self):
         """Three levels of nesting."""
         composer = PrimitiveComposer()
-        composition = composer.parse_composition_yaml({
-            "op": "sequence",
-            "children": [
-                {
-                    "op": "parallel",
-                    "drone_groups": [[0, 1], [2, 3]],
-                    "children": [
-                        {
-                            "op": "blend",
-                            "weight": 0.5,
-                            "children": [
-                                {"primitive": "rotate", "params": [10, "z"]},
-                                {"primitive": "rotate", "params": [-10, "z"]},
-                            ],
-                        },
-                        {"primitive": "move_z", "params": [[1, 2], 10]},
-                    ],
-                },
-                {"primitive": "rotate", "params": [5, "z"]},
-            ],
-        })
+        composition = composer.parse_composition_yaml(
+            {
+                "op": "sequence",
+                "children": [
+                    {
+                        "op": "parallel",
+                        "drone_groups": [[0, 1], [2, 3]],
+                        "children": [
+                            {
+                                "op": "blend",
+                                "weight": 0.5,
+                                "children": [
+                                    {"primitive": "rotate", "params": [10, "z"]},
+                                    {"primitive": "rotate", "params": [-10, "z"]},
+                                ],
+                            },
+                            {"primitive": "move_z", "params": [[1, 2], 10]},
+                        ],
+                    },
+                    {"primitive": "rotate", "params": [5, "z"]},
+                ],
+            }
+        )
         swarm_pos = _make_swarm_pos(4)
         limits = _make_limits()
         final_pos, waypoints = composer.execute_composed(composition, swarm_pos, 0.0, 4.0, limits)
@@ -594,6 +628,7 @@ class TestNestedComposition:
 # Tests for interpolation
 # ---------------------------------------------------------------------------
 
+
 class TestInterpolation:
     """Tests for the waypoint interpolation used in blend."""
 
@@ -604,10 +639,7 @@ class TestInterpolation:
         # Create waypoints at t=1.0 and t=3.0, query at t=2.0
         pos1 = np.array([0.0, 0.0, 100.0])
         pos3 = np.array([0.0, 0.0, 200.0])
-        wps = {
-            1.0: {0: pos1},
-            3.0: {0: pos3},
-        }
+        wps = {1.0: {0: pos1}, 3.0: {0: pos3}}
         result = PrimitiveComposer._interpolate_waypoints(wps, [1.0, 2.0, 3.0], 1)
         assert 2.0 in result
         assert result[2.0][0][2] == pytest.approx(150.0)
@@ -633,6 +665,7 @@ class TestInterpolation:
 # ---------------------------------------------------------------------------
 # Tests for real-world YAML parsing
 # ---------------------------------------------------------------------------
+
 
 class TestYamlIntegration:
     """Test parsing from actual YAML strings (as the LLM would output)."""

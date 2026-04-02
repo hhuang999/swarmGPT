@@ -112,12 +112,7 @@ class AnthropicProvider(LLMProvider):
             raise LLMException(f"Anthropic completion failed: {exc}") from exc
 
     def analyze_image(
-        self,
-        prompt: str,
-        image_source: str,
-        *,
-        model: str | None = None,
-        max_tokens: int = 4096,
+        self, prompt: str, image_source: str, *, model: str | None = None, max_tokens: int = 4096
     ) -> ImageAnalysisResult:
         """Analyse an image using Anthropic Claude Vision.
 
@@ -147,9 +142,7 @@ class AnthropicProvider(LLMProvider):
     # -- Private helpers -------------------------------------------------------
 
     @staticmethod
-    def _split_messages(
-        messages: list[dict[str, str]],
-    ) -> tuple[str | None, list[dict[str, str]]]:
+    def _split_messages(messages: list[dict[str, str]]) -> tuple[str | None, list[dict[str, str]]]:
         """Extract a system message and return the remaining conversation.
 
         Anthropic expects the system prompt as a separate parameter, not
@@ -171,7 +164,10 @@ class AnthropicProvider(LLMProvider):
                 # Map "system" role messages (after the first) to "user" so
                 # they still reach the model without breaking the API contract.
                 api_messages.append(
-                    {"role": "user" if msg.get("role") == "system" else msg["role"], "content": msg["content"]}  # type: ignore[dict-item]
+                    {
+                        "role": "user" if msg.get("role") == "system" else msg["role"],
+                        "content": msg["content"],
+                    }  # type: ignore[dict-item]
                 )
         return system_prompt, api_messages
 
