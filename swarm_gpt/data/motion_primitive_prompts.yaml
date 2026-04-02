@@ -79,12 +79,26 @@ user_initial: >
         Takes 3 parameters ( delta_height, spacing, is_inverted ) and creates a cone using concentric circles of different radii. Each layer has 4 additional drones.
         Delta_height is the difference in height between layers. A larger delta_height corresponds to a taller cone.
         Spacing is the minimum_spacing between drones of a layer. A larger spacing means a larger circle radius and wider cone.
-        Is_inverted is a boolean value (an integer of 0 or 1) that determines if the cone is inverted or not. Inverted cones are more expressive and dynamic. 
+        Is_inverted is a boolean value (an integer of 0 or 1) that determines if the cone is inverted or not. Inverted cones are more expressive and dynamic.
         #delta_height is an integer between [30, 80]
         #spacing is an integer between [40, 80]
         #is_inverted is an integer with the values 0 or 1
-      eg 
+      eg
         form_star( 120, 60, 50 )
+    - form_heart
+        Takes a list of drone IDs as input, and z coordinate ( height ) for the heart formation.
+        Arranges the specified drones into a parametric heart curve. The heart shape uses the equation
+        x = 16sin^3(t), y = 13cos(t) - 5cos(2t) - 2cos(3t) - cos(4t) scaled by 10cm per unit.
+        # height has to be greater than zero
+      eg
+        form_heart([1, 2, 3, 4, 5, 6], 150)
+    - form_line
+        Takes a list of drone IDs as input, and z coordinate ( height ) for the line formation.
+        Arranges the specified drones in a straight line along the x-axis with 70cm spacing between drones.
+        The line is centered at the origin.
+        # height has to be greater than zero
+      eg
+        form_line([1, 2, 3, 4, 5], 100)
 
 
     5: multi time dependent functions ( For such functions we need only one function call for multiple time steps)
@@ -149,6 +163,53 @@ user_initial: >
           4: zig_zag(3, 20, 10)
           5: PLAN
           6: PLAN
+
+    - firework:
+        Expand outward and rise like a firework, then slow descent back. Takes 3 parameters.
+        Parameters: `steps` (int), `height` (int) - peak altitude in cm, `spread` (int) - maximum horizontal spread in cm.
+        #steps is an integer between [2, 3]
+        #height is an integer between [50, 200]
+        #spread is an integer between [60, 200]
+        #Since firework is a multi time dependent function, it should be followed by 'PLAN' keyword for the number of steps -1 times
+        eg:
+          1: firework(3, 150, 150)
+          2: PLAN
+          3: PLAN
+
+    - pendulum:
+        Swing drones back and forth like a pendulum. Takes 2 parameters.
+        Parameters: `steps` (int), `swing_angle` (int) - maximum swing angle in degrees.
+        #steps is an integer between [2, 3]
+        #swing_angle is an integer between [15, 90]
+        #Since pendulum is a multi time dependent function, it should be followed by 'PLAN' keyword for the number of steps -1 times
+        eg:
+          1: pendulum(3, 45)
+          2: PLAN
+          3: PLAN
+
+    - scatter_gather:
+        Scatter drones outward then gather inward in a smooth repeating cycle. Takes 3 parameters.
+        Parameters: `steps` (int), `spread` (int) - maximum horizontal spread in cm, `height` (int) - target height in cm.
+        #steps is an integer between [2, 3]
+        #spread is an integer between [60, 200]
+        #height is an integer between [50, 200]
+        #Since scatter_gather is a multi time dependent function, it should be followed by 'PLAN' keyword for the number of steps -1 times
+        eg:
+          1: scatter_gather(3, 150, 120)
+          2: PLAN
+          3: PLAN
+
+    - orbit:
+        Orbit around center at different heights, similar to twister but with evenly distributed heights. Takes 3 parameters.
+        Parameters: `steps` (int), `omega` (int) - angular velocity (divided by 10 internally, so use values 2-20), `z_spacing` (int) - vertical spacing between drones.
+        #steps is an integer between [2, 3]
+        #omega is an integer between [2, 20] with a higher omega corresponding to faster orbiting
+        #z_spacing is an integer between [5, 30]
+        #Since orbit is a multi time dependent function, it should be followed by 'PLAN' keyword for the number of steps -1 times
+        eg:
+          1: orbit(3, 15, 10)
+          2: PLAN
+          3: PLAN
         
     - wave:
         Moves all drones in a three-dimensional wave propagating through a two-dimensional rectangular elastic surface with bounded edges. The disturbance at any point on the surface is defined by its parameters in space and time, and the wave propagation is governed by the wave equation with a speed `c > 0`. Takes 5 parameters.

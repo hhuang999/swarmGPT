@@ -27,6 +27,12 @@ motion_primitives = {
     "twister": {"n_args": 3},
     "form_star": {"n_args": 3},
     "form_cone": {"n_args": 3},
+    "firework": {"n_args": 3},
+    "pendulum": {"n_args": 2},
+    "scatter_gather": {"n_args": 3},
+    "form_heart": {"n_args": 2},
+    "form_line": {"n_args": 2},
+    "orbit": {"n_args": 3},
 }
 
 
@@ -397,6 +403,262 @@ def twister(
     # Calculate the radius and height for each drone
     radius = np.linspace(min_radius, max_radius, n_drones)
     z = np.linspace(min_height, max_height, n_drones)
+    angles = np.linspace(0, 4 * np.pi, n_drones)
+    x = radius * np.cos(angles)
+    y = radius * np.sin(angles)
+    des_pos = np.array([x, y, z]).T
+
+    assignment = _assign_positions(swarm_pos, des_pos)
+    dt = (tend - tstart) / steps
+
+    waypoints = {}
+    for t in np.linspace(tstart, tend, steps + 1)[1:]:
+        angles += omega * dt
+        pos = np.array([radius * np.cos(angles), radius * np.sin(angles), z]).T[assignment]
+        waypoints[t] = {i: p.copy() for i, p in enumerate(pos)}
+
+    return pos, waypoints
+
+
+def firework(
+    params: tuple[int, int, int],
+    swarm_pos: NDArray,
+    tstart: float,
+    tend: float,
+    limits: dict[str, NDArray],
+) -> tuple[NDArray, dict[float, dict[int, NDArray]]]:
+    """Expand outward and rise, then slow descent like a firework.
+
+    Args:
+        params: [steps, height, spread] where steps is the number of animation
+            steps, height is the peak altitude in cm, and spread is the maximum
+            horizontal spread in cm.
+    """
+    steps, height, spread = params
+    n_drones = swarm_pos.shape[0]
+    min_spacing = 60
+
+    centroid = np.mean(swarm_pos, axis=0)
+    spread = max(spread, min_spacing)
+
+    # Assign each drone a radial direction evenly spaced
+    angles = np.linspace(0, 2 * np.pi, n_drones, endpoint=False)
+    dx = spread * np.cos(angles)
+    dy = spread * np.sin(angles)
+
+    # Clip height to limits
+    max_z = min(height, limits["upper"][2] * 100)
+    start_z = centroid[2]
+
+    waypoints = {}
+    pos = swarm_pos.copy()
+    for i, t in enumerate(np.linspace(tstart, tend, steps + 1)[1:]):
+        frac = (t - tstart) / (tend - tstart)
+        if frac <= 0.5:
+            # First half: expand outward + rise
+            phase = frac / 0.5  # 0..1
+            pos[:, 0] = centroid[0] + phase * dx
+            pos[:, 1] = centroid[1] + phase * dy
+            pos[:, 2] = start_z + phase * (max_z - start_z)
+        else:
+            # Second half: slow descent back to center height
+            phase = (frac - 0.5) / 0.5  # 0..1
+            pos[:, 0] = centroid[0] + (1 - phase) * dx
+            pos[:, 1] = centroid[1] + (1 - phase) * dy
+            pos[:, 2] = max_z - phase * (max_z - start_z) * 0.6
+        waypoints[t] = {i: p.copy() for i, p in enumerate(pos)}
+
+    return pos, waypoints
+
+
+def pendulum(
+    params: tuple[int, int],
+    swarm_pos: NDArray,
+    tstart: float,
+    tend: float,
+    limits: dict[str, NDArray],
+) -> tuple[NDArray, dict[float, dict[int, NDArray]]]:
+    """Swing drones back and forth like a pendulum.
+
+    Args:
+        params: [steps, swing_angle] where steps is the number of animation
+            steps and swing_angle is the maximum swing angle in degrees.
+    """
+    steps, swing_angle = params
+    n_drones = swarm_pos.shape[0]
+    swing_angle = np.deg2rad(swing_angle)
+
+    centroid = np.mean(swarm_pos, axis=0)
+    arm_length = 150  # Effective pendulum arm length in cm
+
+    waypoints = {}
+    pos = swarm_pos.copy()
+    for i, t in enumerate(np.linspace(tstart, tend, steps + 1)[1:]):
+        frac = (t - tstart) / (tend - tstart)
+        angle = swing_angle * np.sin(2 * np.pi * frac)
+        # Horizontal displacement from pendulum swing
+        dx = arm_length * np.sin(angle)
+        dz = -arm_length * (1 - np.cos(angle))
+        pos[:, 0] = centroid[0] + dx
+        pos[:, 2] = np.clip(centroid[2] + dz, limits["lower"][2] * 100, limits["upper"][2] * 100)
+        waypoints[t] = {i: p.copy() for i, p in enumerate(pos)}
+
+    return pos, waypoints
+
+
+def scatter_gather(
+    params: tuple[int, int, int],
+    swarm_pos: NDArray,
+    tstart: float,
+    tend: float,
+    limits: dict[str, NDArray],
+) -> tuple[NDArray, dict[float, dict[int, NDArray]]]:
+    """Scatter drones outward then gather them inward, repeating.
+
+    Args:
+        params: [steps, spread, height] where steps is the number of animation
+            steps, spread is the maximum horizontal spread in cm, and height
+            is the target height in cm.
+    """
+    steps, spread, height = params
+    n_drones = swarm_pos.shape[0]
+    min_spacing = 60
+    spread = max(spread, min_spacing)
+    height = int(np.clip(height, limits["lower"][2] * 100, limits["upper"][2] * 100))
+
+    centroid = np.mean(swarm_pos, axis=0)
+    angles = np.linspace(0, 2 * np.pi, n_drones, endpoint=False)
+    dx = spread * np.cos(angles)
+    dy = spread * np.sin(angles)
+
+    waypoints = {}
+    pos = swarm_pos.copy()
+    for i, t in enumerate(np.linspace(tstart, tend, steps + 1)[1:]):
+        frac = (t - tstart) / (tend - tstart)
+        # Full scatter-gather cycle: 0->0.5 scatter, 0.5->1.0 gather
+        phase = np.sin(np.pi * frac)  # Smooth 0->1->0
+        pos[:, 0] = centroid[0] + phase * dx
+        pos[:, 1] = centroid[1] + phase * dy
+        pos[:, 2] = centroid[2] + phase * (height - centroid[2])
+        waypoints[t] = {i: p.copy() for i, p in enumerate(pos)}
+
+    return pos, waypoints
+
+
+def form_heart(
+    params: tuple[list[int], int],
+    swarm_pos: NDArray,
+    tstart: float,
+    tend: float,
+    limits: dict[str, NDArray],
+) -> tuple[NDArray, dict[float, dict[int, NDArray]]]:
+    """Arrange drones in a heart shape.
+
+    Args:
+        params: [drone_ids, height] where drone_ids is a list of drone IDs
+            and height is the z-coordinate in cm.
+    """
+    drone_ids, z_coord = params
+    drone_ids = _sanitize_drone_ids(drone_ids, swarm_pos.shape[0])
+    n_drones = len(drone_ids)
+    z_coord = int(z_coord)
+
+    # Parametric heart curve: x = 16sin^3(t), y = 13cos(t) - 5cos(2t) - 2cos(3t) - cos(4t)
+    t = np.linspace(0, 2 * np.pi, n_drones, endpoint=False)
+    x = 16 * np.sin(t) ** 3
+    y = 13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4 * t)
+
+    # Scale to fit within limits, approximately 10cm per unit
+    scale = 10
+    x = x * scale
+    y = y * scale
+
+    # Clip to limits
+    x = np.clip(x, limits["lower"][0] * 100, limits["upper"][0] * 100)
+    y = np.clip(y, limits["lower"][1] * 100, limits["upper"][1] * 100)
+
+    des_pos = np.array([x, y, [z_coord] * n_drones]).T
+    assignment = _assign_positions(swarm_pos[drone_ids], des_pos)
+
+    waypoints = {}
+    waypoints[tend] = {i: p.copy() for i, p in enumerate(des_pos[assignment])}
+    pos = swarm_pos.copy()
+    pos[drone_ids] = des_pos[assignment]
+    return pos, waypoints
+
+
+def form_line(
+    params: tuple[list[int], int],
+    swarm_pos: NDArray,
+    tstart: float,
+    tend: float,
+    limits: dict[str, NDArray],
+) -> tuple[NDArray, dict[float, dict[int, NDArray]]]:
+    """Arrange drones in a straight line along the x-axis.
+
+    Args:
+        params: [drone_ids, height] where drone_ids is a list of drone IDs
+            and height is the z-coordinate in cm.
+    """
+    drone_ids, z_coord = params
+    drone_ids = _sanitize_drone_ids(drone_ids, swarm_pos.shape[0])
+    n_drones = len(drone_ids)
+    z_coord = int(z_coord)
+    min_spacing = 70
+
+    # Calculate total line length
+    total_length = (n_drones - 1) * min_spacing
+    x = np.linspace(-total_length / 2, total_length / 2, n_drones)
+
+    # Clip to limits
+    x = np.clip(x, limits["lower"][0] * 100, limits["upper"][0] * 100)
+
+    des_pos = np.zeros((n_drones, 3))
+    des_pos[:, 0] = x
+    des_pos[:, 2] = z_coord
+
+    assignment = _assign_positions(swarm_pos[drone_ids], des_pos)
+
+    waypoints = {}
+    waypoints[tend] = {i: p.copy() for i, p in enumerate(des_pos[assignment])}
+    pos = swarm_pos.copy()
+    pos[drone_ids] = des_pos[assignment]
+    return pos, waypoints
+
+
+def orbit(
+    params: tuple[int, int, int],
+    swarm_pos: NDArray,
+    tstart: float,
+    tend: float,
+    limits: dict[str, NDArray],
+) -> tuple[NDArray, dict[float, dict[int, NDArray]]]:
+    """Orbit around center at different heights.
+
+    Args:
+        params: [steps, omega, z_spacing] where steps is the number of animation
+            steps, omega is the angular velocity (divided by 10 internally),
+            and z_spacing is the vertical spacing between adjacent drones.
+    """
+    steps, omega, z_spacing = params
+    n_drones = swarm_pos.shape[0]
+    min_spacing = 60
+    omega = omega / 10
+    max_omega = 2
+    omega = min(omega, max_omega)
+
+    lim_lower, lim_upper = limits["lower"], limits["upper"]
+    max_radius = min(np.min((lim_upper[:2] - lim_lower[:2])) * 100 / 2, 400)
+    radius = max(min_spacing / (2 * np.sin(np.pi / n_drones)), 30)
+    radius = min(radius, max_radius)
+
+    z_center = 100 * (lim_lower[2] + (lim_upper[2] - lim_lower[2]) / 2)
+    z = np.linspace(
+        max(z_center - z_spacing * n_drones / 2, lim_lower[2] * 100),
+        min(z_center + z_spacing * n_drones / 2, lim_upper[2] * 100),
+        n_drones,
+    )
+
     angles = np.linspace(0, 4 * np.pi, n_drones)
     x = radius * np.cos(angles)
     y = radius * np.sin(angles)
