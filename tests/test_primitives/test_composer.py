@@ -1,51 +1,16 @@
 """Tests for the PrimitiveComposer: sequence, parallel, and blend operators."""
 
-import importlib
-import sys
-import types
-import unittest.mock as mock
-
 import numpy as np
 import pytest
 import yaml
 from numpy.typing import NDArray
 
-# ---------------------------------------------------------------------------
-# Bootstrap: import motion_primitives and primitive_composer without triggering
-# heavy dependencies from swarm_gpt.__init__
-# ---------------------------------------------------------------------------
-_spec_mp = importlib.util.spec_from_file_location(
-    "motion_primitives",
-    "swarm_gpt/core/motion_primitives.py",
+from swarm_gpt.core.primitive_composer import (
+    COMPOSITION_OPERATORS,
+    CompositionError,
+    PrimitiveComposer,
 )
-_exc_mod = types.ModuleType("swarm_gpt.exception")
-
-
-class _LLMFormatError(Exception):
-    pass
-
-
-_exc_mod.LLMFormatError = _LLMFormatError
-_exc_mod.LLMResponseProcessingError = Exception
-_exc_mod.LLMPlanError = Exception
-sys.modules["swarm_gpt.exception"] = _exc_mod
-
-_mp = importlib.util.module_from_spec(_spec_mp)
-sys.modules[_mp.__name__] = _mp
-_spec_mp.loader.exec_module(_mp)
-
-# Import primitive_composer (which depends on motion_primitives and exception)
-_spec_pc = importlib.util.spec_from_file_location(
-    "primitive_composer",
-    "swarm_gpt/core/primitive_composer.py",
-)
-_pc = importlib.util.module_from_spec(_spec_pc)
-sys.modules[_pc.__name__] = _pc
-_spec_pc.loader.exec_module(_pc)
-
-PrimitiveComposer = _pc.PrimitiveComposer
-CompositionError = _pc.CompositionError
-primitive_by_name = _mp.primitive_by_name
+from swarm_gpt.core.motion_primitives import primitive_by_name
 
 
 # ---------------------------------------------------------------------------
@@ -490,7 +455,7 @@ class TestExecuteBlend:
 
         # Execute first child alone for comparison
         fn = primitive_by_name("move_z")
-        _, wps_a = fn(([0], 50), swarm_pos, 0.0, 2.0, limits)
+        _, wps_a = fn(([1], 50), swarm_pos, 0.0, 2.0, limits)
         z_a = list(wps_a.values())[-1][0][2]
         assert np.isclose(z_blended, z_a, atol=0.1)
 
@@ -515,7 +480,7 @@ class TestExecuteBlend:
 
         # Execute second child alone for comparison
         fn = primitive_by_name("move_z")
-        _, wps_b = fn(([0], -50), swarm_pos, 0.0, 2.0, limits)
+        _, wps_b = fn(([1], -50), swarm_pos, 0.0, 2.0, limits)
         z_b = list(wps_b.values())[-1][0][2]
         assert np.isclose(z_blended, z_b, atol=0.1)
 

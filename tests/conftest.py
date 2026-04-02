@@ -1,3 +1,25 @@
+import os
+import sys
+from unittest.mock import MagicMock
+
+# Set dummy API keys before any module imports that create clients at module level
+os.environ.setdefault("OPENAI_API_KEY", "test-key-dummy")
+
+# Mock heavy/missing optional dependencies before any test collection
+for _mod in (
+    "rospy", "rospkg", "rosgraph", "roslib", "rosgraph_msgs",
+    "crazyflow", "crazyflow.control", "crazyflow.sim",
+    "axswarm", "vlc",
+    "pycrazyswarm", "libfmp", "libfmp.c5", "libfmp.c6",
+    "librosa", "soundfile", "resampy", "soxr",
+    "pydub", "madmom", "midiutil",
+    "mutagen", "mutagen.mp3", "mutagen.id3",
+    "mujoco", "einops", "jax", "jax.numpy",
+    "anthropic", "ollama",
+):
+    if _mod not in sys.modules:
+        sys.modules[_mod] = MagicMock()
+
 from pathlib import Path
 
 import numpy as np
