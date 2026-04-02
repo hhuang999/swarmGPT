@@ -32,6 +32,11 @@ dependencies = [
     "mutagen",
     "python-vlc",
     "gradio",
+    "fastapi",
+    "uvicorn",
+    "websockets",
+    "RestrictedPython",
+    "opencv-python",
 ]
 
 [tool.setuptools.packages.find]

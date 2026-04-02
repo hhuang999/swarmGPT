@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from datetime import datetime
@@ -14,6 +15,12 @@ import yaml
 from scipy.interpolate import make_smoothing_spline
 
 from swarm_gpt.core import Choreographer, DroneController
+from swarm_gpt.core.custom_primitive_generator import (
+    GENERATE_PRIMITIVE_PROMPT,
+    CustomPrimitiveManager,
+    CustomPrimitiveValidator,
+    PrimitiveSandbox,
+)
 from swarm_gpt.core.sim import simulate_axswarm, simulate_spline
 from swarm_gpt.exception import LLMException
 from swarm_gpt.utils import MusicManager
@@ -281,6 +288,122 @@ class AppBackend:
         assert history[-1]["role"] == "assistant", "Last message in history is not a response"
         self.choreographer.messages = history
         return history[-1]["content"]
+
+    def create_custom_primitive(
+        self,
+        description: str,
+        name: str | None = None,
+        params_desc: str = "()",
+        n_args: int = 0,
+    ) -> dict[str, Any]:
+        """Generate, validate, and register a custom motion primitive using the LLM.
+
+        Args:
+            description: Natural-language description of the desired primitive.
+            name: Optional function name.  Auto-generated from the description if
+                not provided.
+            params_desc: Human-readable description of the parameters.
+            n_args: Number of positional arguments the function expects.
+
+        Returns:
+            A dict with ``"success"`` (bool) and either ``"name"`` on success
+            or ``"error"`` on failure.
+        """
+        logger.info("Creating custom primitive: %s", description)
+
+        # Derive a function name from the description if not supplied.
+        if name is None:
+            name = "_".join(description.lower().split()[:3])
+            # Sanitise to valid Python identifier
+            name = "".join(c if c.isalnum() or c == "_" else "_" for c in name)
+            if not name.isidentifier():
+                name = f"custom_{name}"
+
+        sandbox = PrimitiveSandbox()
+        validator = CustomPrimitiveValidator()
+
+        # Format the LLM prompt.
+        prompt = GENERATE_PRIMITIVE_PROMPT.format(
+            func_name=name,
+            user_description=description,
+            suggested_name=name,
+            suggested_params=params_desc,
+        )
+
+        # Call the LLM provider to generate code.
+        try:
+            messages = [
+                {"role": "system", "content": "You are a Python code generator for drone motion primitives."},
+                {"role": "user", "content": prompt},
+            ]
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
+                # We are inside an existing event loop (e.g. Gradio) --
+                # schedule the coroutine and block until it completes.
+                import concurrent.futures
+
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    code = pool.submit(
+                        asyncio.run, self._call_llm_for_primitive(messages)
+                    ).result()
+            else:
+                code = asyncio.run(self._call_llm_for_primitive(messages))
+        except Exception as exc:
+            logger.error("LLM code generation failed: %s", exc)
+            return {"success": False, "error": str(exc)}
+
+        # Strip markdown fences if the LLM wrapped the code.
+        if "```" in code:
+            code = code.split("```")[1]
+            if code.startswith("python"):
+                code = code[len("python"):]
+            code = code.strip()
+
+        # Compile in sandbox.
+        try:
+            func = sandbox.execute(code, name)
+        except (SyntaxError, NameError, ImportError) as exc:
+            logger.error("Sandbox compilation failed: %s", exc)
+            return {"success": False, "error": f"Compilation error: {exc}"}
+
+        # Validate.
+        errors = validator.validate(func)
+        if errors:
+            logger.error("Validation failed: %s", "; ".join(errors))
+            return {"success": False, "error": "Validation failed: " + "; ".join(errors)}
+
+        # Register.
+        try:
+            manager = CustomPrimitiveManager(sandbox=sandbox, validator=validator)
+            manager.register(
+                name=name,
+                func=func,
+                code=code,
+                description=description,
+                params_desc=params_desc,
+                n_args=n_args,
+            )
+        except Exception as exc:
+            logger.error("Registration failed: %s", exc)
+            return {"success": False, "error": f"Registration error: {exc}"}
+
+        logger.info("Custom primitive '%s' created successfully", name)
+        return {"success": True, "name": name}
+
+    async def _call_llm_for_primitive(self, messages: list[dict[str, str]]) -> str:
+        """Invoke the choreographer's LLM provider asynchronously.
+
+        Delegates to the synchronous OpenAI / ollama client used by the
+        :class:`Choreographer` so that custom primitive generation shares the
+        same model and API key configuration.
+        """
+        return await asyncio.to_thread(
+            self.choreographer.generate_choreography, messages
+        )
 
     def save_preset(self):
         """Save the preset."""

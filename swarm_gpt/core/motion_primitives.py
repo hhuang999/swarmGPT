@@ -33,6 +33,7 @@ motion_primitives = {
     "form_heart": {"n_args": 2},
     "form_line": {"n_args": 2},
     "orbit": {"n_args": 3},
+    "form_shape": {"n_args": 2},
 }
 
 
@@ -857,3 +858,37 @@ def _assign_positions(pos: NDArray, des_pos: NDArray) -> NDArray:
     dist = np.linalg.norm(pos[:, None, :] - des_pos[None, :, :], axis=-1)
     # Use the Hungarian algorithm to find the optimal assignment
     return linear_sum_assignment(dist)[1]
+
+
+def form_shape(
+    params: tuple,
+    swarm_pos: NDArray,
+    tstart: float,
+    tend: float,
+    limits: dict[str, NDArray],
+) -> tuple[NDArray, dict[float, dict[int, NDArray]]]:
+    """Generic shape formation from detected image or named template."""
+    if len(params) == 2 and isinstance(params[0], str):
+        shape_name, height = params
+        height = int(np.clip(height, limits["lower"][2] * 100, limits["upper"][2] * 100))
+        if shape_name == "heart":
+            return form_heart((1.5, height, 0), swarm_pos, tstart, tend, limits)
+        elif shape_name == "line":
+            return form_line(("x", 60, height), swarm_pos, tstart, tend, limits)
+        elif shape_name == "circle":
+            return form_circle(
+                (list(range(1, len(swarm_pos) + 1)), height),
+                swarm_pos, tstart, tend, limits,
+            )
+        else:
+            raise ValueError(f"Unknown shape template: {shape_name}")
+    else:
+        positions = np.array(params[0])
+        if positions.shape[1] == 3:
+            des_pos = positions
+        else:
+            des_pos = np.column_stack([positions, np.full(len(positions), 150.0)])
+        assignment = _assign_positions(swarm_pos, des_pos)
+        result = des_pos[assignment]
+        waypoints = {tend: {i: p.copy() for i, p in enumerate(result)}}
+        return result, waypoints
