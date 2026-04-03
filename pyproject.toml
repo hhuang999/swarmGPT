@@ -26,6 +26,7 @@ dependencies = [
     "ollama",
     "pyyaml",
     "openai",
+    "anthropic",
     "scipy",
     "rospkg",
     "libfmp",
@@ -37,6 +38,7 @@ dependencies = [
     "websockets",
     "RestrictedPython",
     "opencv-python",
+    "plotly",
 ]
 
 [tool.setuptools.packages.find]
